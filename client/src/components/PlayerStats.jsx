@@ -11,7 +11,7 @@ const COLUMNS = [
   { key: 'FG3_PCT', label: '3P%', format: (v) => v != null ? `${(v < 1 ? v * 100 : v).toFixed(1)}` : '-' },
 ];
 
-function PlayerTable({ players, teamColor, teamAbbr }) {
+function PlayerTable({ players, teamColor, teamAbbr, subtitle }) {
   const [sortKey, setSortKey] = useState('MIN');
   const [sortDir, setSortDir] = useState('desc');
 
@@ -33,9 +33,14 @@ function PlayerTable({ players, teamColor, teamAbbr }) {
 
   return (
     <div className="flex-1 min-w-0">
-      <h4 className="text-sm font-bold mb-3 px-1" style={{ color: teamColor }}>
-        {teamAbbr}
-      </h4>
+      <div className="mb-3 px-1">
+        <h4 className="text-sm font-bold" style={{ color: teamColor }}>
+          {teamAbbr}
+        </h4>
+        {subtitle && (
+          <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>
+        )}
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
@@ -88,26 +93,39 @@ function PlayerTable({ players, teamColor, teamAbbr }) {
   );
 }
 
-export default function PlayerStats({ players, matchup }) {
+export default function PlayerStats({ players, matchup, mode = 'season' }) {
   if (!players || !matchup) return null;
 
-  const team1Info = teams.find((t) => t.id === matchup.team1.id);
-  const team2Info = teams.find((t) => t.id === matchup.team2.id);
+  const isH2H = mode === 'h2h';
+
+  const team1Info = isH2H
+    ? teams.find((t) => t.abbreviation === matchup.team1.abbreviation)
+    : teams.find((t) => t.id === matchup.team1.id);
+  const team2Info = isH2H
+    ? teams.find((t) => t.abbreviation === matchup.team2.abbreviation)
+    : teams.find((t) => t.id === matchup.team2.id);
+
+  const team1Abbr = matchup.team1.abbreviation;
+  const team2Abbr = matchup.team2.abbreviation;
 
   return (
     <div className="bg-[var(--bg-secondary)] rounded-2xl p-6">
-      <h3 className="text-lg font-bold text-white mb-4">Player Stats</h3>
+      <h3 className="text-lg font-bold text-white mb-4">
+        {isH2H ? 'Head-to-Head Player Stats' : 'Player Stats'}
+      </h3>
       <div className="flex gap-6 flex-col lg:flex-row">
         <PlayerTable
           players={players.team1_players}
           teamColor={team1Info?.color || '#3b82f6'}
-          teamAbbr={matchup.team1.abbreviation}
+          teamAbbr={team1Abbr}
+          subtitle={isH2H ? `Stats vs ${team2Abbr}` : null}
         />
         <div className="hidden lg:block w-px bg-[var(--border-color)]" />
         <PlayerTable
           players={players.team2_players}
           teamColor={team2Info?.color || '#ef4444'}
-          teamAbbr={matchup.team2.abbreviation}
+          teamAbbr={team2Abbr}
+          subtitle={isH2H ? `Stats vs ${team1Abbr}` : null}
         />
       </div>
     </div>

@@ -29,3 +29,15 @@ class MatchupResponse(BaseModel):
 class PlayerStatsResponse(BaseModel):
     team1_players: list[dict]
     team2_players: list[dict]
+
+
+class H2HTeamStats(BaseModel):
+    stats: dict
+    ranks: dict
+    gamesPlayed: int
+    abbreviation: str = ""
+
+
+class H2HStatsResponse(BaseModel):
+    team1: H2HTeamStats
+    team2: H2HTeamStats

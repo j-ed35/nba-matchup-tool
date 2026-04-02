@@ -1,4 +1,4 @@
-import { formatStat, formatRank, statDisplayName, LOWER_IS_BETTER } from '../utils/formatting';
+import { formatStat, formatRank, formatOrdinal, statDisplayName, LOWER_IS_BETTER } from '../utils/formatting';
 import teams from '../data/nba_teams.json';
 
 const STAT_SECTIONS = [
@@ -32,19 +32,79 @@ const STAT_SECTIONS = [
   },
 ];
 
+const H2H_STAT_SECTIONS = [
+  {
+    title: 'Scoring & Playmaking',
+    stats: ['PTS', 'REB', 'AST', 'STL', 'BLK', 'TOV'],
+  },
+  {
+    title: 'Shooting',
+    stats: ['FG_PCT', 'FG3_PCT', 'FT_PCT'],
+  },
+  {
+    title: 'Rebounding & Fouls',
+    stats: ['OREB', 'DREB', 'PF'],
+  },
+  {
+    title: 'Advanced',
+    stats: ['OFF_RATING', 'DEF_RATING', 'NET_RATING', 'PACE', 'TS_PCT', 'EFG_PCT'],
+  },
+];
+
 function isBetter(val1, val2, statKey) {
   if (val1 == null || val2 == null) return false;
   if (LOWER_IS_BETTER.has(statKey)) return val1 < val2;
   return val1 > val2;
 }
 
-function StatRow({ statKey, team1Stats, team2Stats, team1Ranks, team2Ranks, team1Color, team2Color }) {
+function StatRow({ statKey, team1Stats, team2Stats, team1Ranks, team2Ranks, team1Color, team2Color, h2hMode }) {
   const val1 = team1Stats?.[statKey];
   const val2 = team2Stats?.[statKey];
-  const rank1 = team1Ranks?.[`${statKey}_RANK`];
-  const rank2 = team2Ranks?.[`${statKey}_RANK`];
   const t1Better = isBetter(val1, val2, statKey);
   const t2Better = isBetter(val2, val1, statKey);
+
+  if (h2hMode) {
+    const rank1 = team1Ranks?.[statKey];
+    const rank2 = team2Ranks?.[statKey];
+
+    return (
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center py-2 px-3 rounded-lg hover:bg-white/[0.02] transition-colors">
+        <div className="text-right flex items-center justify-end gap-2">
+          <span
+            className={`text-base tabular-nums ${t1Better ? 'font-bold' : 'text-gray-400'}`}
+            style={t1Better ? { color: team1Color } : undefined}
+          >
+            {formatStat(val1, statKey)}
+          </span>
+          {rank1 != null && (
+            <span className="text-[11px] text-gray-500">({formatOrdinal(rank1)})</span>
+          )}
+        </div>
+
+        <div className="px-4 text-center">
+          <span className="text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+            {statDisplayName(statKey)}
+          </span>
+        </div>
+
+        <div className="text-left flex items-center gap-2">
+          {rank2 != null && (
+            <span className="text-[11px] text-gray-500">({formatOrdinal(rank2)})</span>
+          )}
+          <span
+            className={`text-base tabular-nums ${t2Better ? 'font-bold' : 'text-gray-400'}`}
+            style={t2Better ? { color: team2Color } : undefined}
+          >
+            {formatStat(val2, statKey)}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Season mode (original)
+  const rank1 = team1Ranks?.[`${statKey}_RANK`];
+  const rank2 = team2Ranks?.[`${statKey}_RANK`];
 
   return (
     <div className="grid grid-cols-[1fr_auto_1fr] items-center py-2 px-3 rounded-lg hover:bg-white/[0.02] transition-colors">
@@ -81,21 +141,41 @@ function StatRow({ statKey, team1Stats, team2Stats, team1Ranks, team2Ranks, team
   );
 }
 
-export default function StatComparison({ matchup }) {
-  if (!matchup) return null;
+export default function StatComparison({ matchup, h2hStats, mode = 'season' }) {
+  const isH2H = mode === 'h2h';
+  const data = isH2H ? h2hStats : matchup;
 
-  const { team1, team2 } = matchup;
-  const team1Info = teams.find((t) => t.id === team1.id);
-  const team2Info = teams.find((t) => t.id === team2.id);
+  if (!data) return null;
+
+  const team1Id = isH2H ? null : data.team1.id;
+  const team2Id = isH2H ? null : data.team2.id;
+  const team1Abbr = data.team1.abbreviation;
+  const team2Abbr = data.team2.abbreviation;
+
+  // In H2H mode, look up team info by abbreviation; in season mode by id
+  const team1Info = isH2H
+    ? teams.find((t) => t.abbreviation === team1Abbr)
+    : teams.find((t) => t.id === team1Id);
+  const team2Info = isH2H
+    ? teams.find((t) => t.abbreviation === team2Abbr)
+    : teams.find((t) => t.id === team2Id);
+
   const team1Color = team1Info?.color || '#3b82f6';
   const team2Color = team2Info?.color || '#ef4444';
+
+  const sections = isH2H ? H2H_STAT_SECTIONS : STAT_SECTIONS;
+
+  const team1Stats = data.team1.stats;
+  const team2Stats = data.team2.stats;
+  const team1Ranks = isH2H ? data.team1.ranks : data.team1.stats_ranks;
+  const team2Ranks = isH2H ? data.team2.ranks : data.team2.stats_ranks;
 
   return (
     <div className="bg-[var(--bg-secondary)] rounded-2xl p-6">
       <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-6 pb-4 border-b border-[var(--border-color)]">
         <div className="text-right">
           <span className="text-lg font-bold" style={{ color: team1Color }}>
-            {team1.abbreviation}
+            {team1Abbr}
           </span>
         </div>
         <div className="px-4">
@@ -103,12 +183,25 @@ export default function StatComparison({ matchup }) {
         </div>
         <div className="text-left">
           <span className="text-lg font-bold" style={{ color: team2Color }}>
-            {team2.abbreviation}
+            {team2Abbr}
           </span>
         </div>
       </div>
 
-      {STAT_SECTIONS.map((section) => (
+      {isH2H && (
+        <div className="text-center mb-4">
+          <span className="text-xs text-gray-500">
+            Based on {data.team1.gamesPlayed} game{data.team1.gamesPlayed !== 1 ? 's' : ''} played
+          </span>
+          {isH2H && (
+            <span className="text-xs text-gray-600 ml-2">
+              &middot; Rankings among all 30 teams vs opponent
+            </span>
+          )}
+        </div>
+      )}
+
+      {sections.map((section) => (
         <div key={section.title} className="mb-4">
           <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2 px-3">
             {section.title}
@@ -118,12 +211,13 @@ export default function StatComparison({ matchup }) {
               <StatRow
                 key={statKey}
                 statKey={statKey}
-                team1Stats={team1.stats}
-                team2Stats={team2.stats}
-                team1Ranks={team1.stats_ranks}
-                team2Ranks={team2.stats_ranks}
+                team1Stats={team1Stats}
+                team2Stats={team2Stats}
+                team1Ranks={team1Ranks}
+                team2Ranks={team2Ranks}
                 team1Color={team1Color}
                 team2Color={team2Color}
+                h2hMode={isH2H}
               />
             ))}
           </div>

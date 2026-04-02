@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import TeamSelector from '../components/TeamSelector';
 import TeamCard from '../components/TeamCard';
+import ModeToggle from '../components/ModeToggle';
 import StatComparison from '../components/StatComparison';
 import HeadToHead from '../components/HeadToHead';
 import PlayerStats from '../components/PlayerStats';
@@ -9,9 +10,12 @@ import { useMatchupData } from '../hooks/useMatchupData';
 export default function MatchupPage() {
   const [team1Id, setTeam1Id] = useState(null);
   const [team2Id, setTeam2Id] = useState(null);
-  const { matchup, players, standings, loading, error } = useMatchupData(team1Id, team2Id);
+  const [mode, setMode] = useState('season');
+  const { matchup, players, h2hStats, h2hPlayers, standings, loading, error } = useMatchupData(team1Id, team2Id, mode);
 
   const standingsList = standings?.standings || [];
+  const hasTeams = team1Id && team2Id;
+  const isH2H = mode === 'h2h';
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)]">
@@ -51,6 +55,11 @@ export default function MatchupPage() {
           </div>
         </div>
 
+        {/* Mode Toggle - only show when both teams are selected */}
+        {hasTeams && (matchup || h2hStats) && !loading && (
+          <ModeToggle mode={mode} onModeChange={setMode} />
+        )}
+
         {/* Loading & Error States */}
         {loading && (
           <div className="flex items-center justify-center py-20">
@@ -77,11 +86,26 @@ export default function MatchupPage() {
         )}
 
         {/* Matchup Content */}
-        {matchup && !loading && (
+        {!loading && (
           <div className="space-y-8">
-            <StatComparison matchup={matchup} />
-            <HeadToHead matchup={matchup} />
-            <PlayerStats players={players} matchup={matchup} />
+            {/* StatComparison: show season or H2H based on mode */}
+            {(isH2H ? h2hStats : matchup) && (
+              <StatComparison matchup={matchup} h2hStats={h2hStats} mode={mode} />
+            )}
+
+            {/* HeadToHead game results: visible in both modes */}
+            {matchup && <HeadToHead matchup={matchup} />}
+
+            {/* PlayerStats: show season or H2H based on mode */}
+            {isH2H ? (
+              h2hPlayers && h2hStats && (
+                <PlayerStats players={h2hPlayers} matchup={h2hStats} mode="h2h" />
+              )
+            ) : (
+              matchup && players && (
+                <PlayerStats players={players} matchup={matchup} mode="season" />
+              )
+            )}
           </div>
         )}
       </main>
