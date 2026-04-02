@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Dev (Full Stack)",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["dev.sh"],
+      "port": 5173,
+      "cwd": "/Users/jacobederer/Repositories/nba-matchup-tool"
+    }
+  ]
+}

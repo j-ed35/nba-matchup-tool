@@ -1,0 +1,134 @@
+import { formatStat, formatRank, statDisplayName, LOWER_IS_BETTER } from '../utils/formatting';
+import teams from '../data/nba_teams.json';
+
+const STAT_SECTIONS = [
+  {
+    title: 'Record',
+    stats: ['W', 'L', 'W_PCT'],
+  },
+  {
+    title: 'Scoring & Playmaking',
+    stats: ['PTS', 'REB', 'AST', 'STL', 'BLK', 'TOV'],
+  },
+  {
+    title: 'Shooting',
+    stats: ['FG_PCT', 'FG3_PCT', 'FT_PCT'],
+  },
+  {
+    title: 'Rebounding & Fouls',
+    stats: ['OREB', 'DREB', 'PF'],
+  },
+  {
+    title: 'Advanced',
+    stats: ['OFF_RATING', 'DEF_RATING', 'NET_RATING', 'PACE'],
+  },
+  {
+    title: 'Misc',
+    stats: ['PTS_OFF_TOV', 'PTS2ND_CHANCE', 'PTS_FB', 'PTS_PAINT'],
+  },
+  {
+    title: 'Opponent',
+    stats: ['OPP_PTS_OFF_TOV', 'OPP_PTS2ND_CHANCE', 'OPP_PTS_FB', 'OPP_PTS_PAINT'],
+  },
+];
+
+function isBetter(val1, val2, statKey) {
+  if (val1 == null || val2 == null) return false;
+  if (LOWER_IS_BETTER.has(statKey)) return val1 < val2;
+  return val1 > val2;
+}
+
+function StatRow({ statKey, team1Stats, team2Stats, team1Ranks, team2Ranks, team1Color, team2Color }) {
+  const val1 = team1Stats?.[statKey];
+  const val2 = team2Stats?.[statKey];
+  const rank1 = team1Ranks?.[`${statKey}_RANK`];
+  const rank2 = team2Ranks?.[`${statKey}_RANK`];
+  const t1Better = isBetter(val1, val2, statKey);
+  const t2Better = isBetter(val2, val1, statKey);
+
+  return (
+    <div className="grid grid-cols-[1fr_auto_1fr] items-center py-2 px-3 rounded-lg hover:bg-white/[0.02] transition-colors">
+      <div className="text-right flex items-center justify-end gap-2">
+        {rank1 != null && (
+          <span className="text-xs text-gray-500">{formatRank(rank1)}</span>
+        )}
+        <span
+          className={`text-base tabular-nums ${t1Better ? 'font-bold' : 'text-gray-400'}`}
+          style={t1Better ? { color: team1Color } : undefined}
+        >
+          {formatStat(val1, statKey)}
+        </span>
+      </div>
+
+      <div className="px-4 text-center">
+        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+          {statDisplayName(statKey)}
+        </span>
+      </div>
+
+      <div className="text-left flex items-center gap-2">
+        <span
+          className={`text-base tabular-nums ${t2Better ? 'font-bold' : 'text-gray-400'}`}
+          style={t2Better ? { color: team2Color } : undefined}
+        >
+          {formatStat(val2, statKey)}
+        </span>
+        {rank2 != null && (
+          <span className="text-xs text-gray-500">{formatRank(rank2)}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function StatComparison({ matchup }) {
+  if (!matchup) return null;
+
+  const { team1, team2 } = matchup;
+  const team1Info = teams.find((t) => t.id === team1.id);
+  const team2Info = teams.find((t) => t.id === team2.id);
+  const team1Color = team1Info?.color || '#3b82f6';
+  const team2Color = team2Info?.color || '#ef4444';
+
+  return (
+    <div className="bg-[var(--bg-secondary)] rounded-2xl p-6">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-6 pb-4 border-b border-[var(--border-color)]">
+        <div className="text-right">
+          <span className="text-lg font-bold" style={{ color: team1Color }}>
+            {team1.abbreviation}
+          </span>
+        </div>
+        <div className="px-4">
+          <span className="text-sm font-medium text-gray-500">VS</span>
+        </div>
+        <div className="text-left">
+          <span className="text-lg font-bold" style={{ color: team2Color }}>
+            {team2.abbreviation}
+          </span>
+        </div>
+      </div>
+
+      {STAT_SECTIONS.map((section) => (
+        <div key={section.title} className="mb-4">
+          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2 px-3">
+            {section.title}
+          </h4>
+          <div className="divide-y divide-[var(--border-color)]/30">
+            {section.stats.map((statKey) => (
+              <StatRow
+                key={statKey}
+                statKey={statKey}
+                team1Stats={team1.stats}
+                team2Stats={team2.stats}
+                team1Ranks={team1.stats_ranks}
+                team2Ranks={team2.stats_ranks}
+                team1Color={team1Color}
+                team2Color={team2Color}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
