@@ -3,12 +3,17 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers import teams, matchup, players
 
-app = FastAPI(title="NBA Matchup Tool API", version="1.0.0")
+app = FastAPI(title="Matchup Tool API", version="1.0.0")
 
 # CORS
+_origins = [
+    "http://localhost:5173",
+    "https://matchuptool.vercel.app",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

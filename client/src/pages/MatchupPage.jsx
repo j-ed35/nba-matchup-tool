@@ -23,7 +23,7 @@ export default function MatchupPage() {
       <header className="border-b border-[var(--border-color)] bg-[var(--bg-secondary)]">
         <div className="max-w-7xl mx-auto px-6 py-5">
           <h1 className="text-2xl font-bold text-white tracking-tight">
-            NBA Matchup Tool
+            Matchup Tool
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             Compare teams side-by-side for the 2025-26 season
