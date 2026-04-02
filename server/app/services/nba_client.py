@@ -80,6 +80,40 @@ class NBAClient:
             response.raise_for_status()
             return response.json()
 
+    async def get_season_team_vs_opponent(self, opp_team_id: str, season: str = None,
+                                          per_mode: str = "PerGame", measure_type: str = "Base",
+                                          season_type: str = "Regular Season") -> dict:
+        """Get ALL teams' season stats filtered to games vs a specific opponent.
+        Returns all 30 teams — used to compute league-wide rankings."""
+        season = season or self._get_current_season()
+        url = f"{self.BASE_URL}/api/querytool/season/team"
+        params = {
+            "leagueId": self.LEAGUE_ID, "SeasonYear": season, "SeasonType": season_type,
+            "PerMode": per_mode, "Grouping": "None", "MeasureType": measure_type,
+            "oppTeamId": str(opp_team_id),
+        }
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=self._querytool_headers(), params=params, timeout=15)
+            response.raise_for_status()
+            return response.json()
+
+    async def get_season_player_vs_opponent(self, team_id: str, opp_team_id: str,
+                                             season: str = None, per_mode: str = "PerGame",
+                                             measure_type: str = "Base",
+                                             season_type: str = "Regular Season") -> dict:
+        """Get player stats for a specific team, filtered to games vs a specific opponent."""
+        season = season or self._get_current_season()
+        url = f"{self.BASE_URL}/api/querytool/season/player"
+        params = {
+            "leagueId": self.LEAGUE_ID, "SeasonYear": season, "SeasonType": season_type,
+            "PerMode": per_mode, "Grouping": "None", "TeamGrouping": "N",
+            "MeasureType": measure_type, "TeamId": str(team_id), "oppTeamId": str(opp_team_id),
+        }
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=self._querytool_headers(), params=params, timeout=15)
+            response.raise_for_status()
+            return response.json()
+
     async def get_h2h_player_games(self, team_id: str, opp_team_id: str, season: str = None, season_type: str = "Regular Season", measure_type: str = "Base") -> dict:
         season = season or self._get_current_season()
         url = f"{self.BASE_URL}/api/querytool/game/player"

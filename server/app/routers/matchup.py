@@ -5,12 +5,18 @@ from cachetools import TTLCache
 from app.services.nba_client import NBAClient
 from app.services.team_stats import normalize_team_stats, extract_standings_for_teams
 from app.services.game_finder import process_h2h_games
-from app.models.schemas import MatchupResponse, TeamStats, H2HGame
+from app.services.h2h_stats import process_h2h_team_stats
+from app.services.player_stats import process_player_stats
+from app.models.schemas import MatchupResponse, TeamStats, H2HGame, H2HStatsResponse, H2HTeamStats, PlayerStatsResponse
 
 router = APIRouter()
 
 # Cache matchup data for 15 minutes
 _matchup_cache = TTLCache(maxsize=64, ttl=900)
+
+# Cache H2H stats for 30 minutes
+_h2h_stats_cache = TTLCache(maxsize=64, ttl=1800)
+_h2h_players_cache = TTLCache(maxsize=64, ttl=1800)
 
 MEASURE_TYPES = ["Base", "Advanced", "Misc", "Opponent"]
 
@@ -101,4 +107,69 @@ async def get_matchup(
     )
 
     _matchup_cache[cache_key] = response
+    return response
+
+
+@router.get("/matchup/h2h-stats", response_model=H2HStatsResponse)
+async def get_h2h_stats(
+    team1_id: str = Query(..., description="Team 1 ID"),
+    team2_id: str = Query(..., description="Team 2 ID"),
+    season_type: str = Query("Regular Season", description="Season type"),
+):
+    cache_key = f"h2h_stats:{team1_id}:{team2_id}:{season_type}"
+    if cache_key in _h2h_stats_cache:
+        return _h2h_stats_cache[cache_key]
+
+    client = NBAClient()
+
+    try:
+        # 4 parallel calls: Base + Advanced stats for each opponent direction
+        base_vs_t2, base_vs_t1, adv_vs_t2, adv_vs_t1 = await asyncio.gather(
+            client.get_season_team_vs_opponent(opp_team_id=team2_id, measure_type="Base", season_type=season_type),
+            client.get_season_team_vs_opponent(opp_team_id=team1_id, measure_type="Base", season_type=season_type),
+            client.get_season_team_vs_opponent(opp_team_id=team2_id, measure_type="Advanced", season_type=season_type),
+            client.get_season_team_vs_opponent(opp_team_id=team1_id, measure_type="Advanced", season_type=season_type),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Failed to fetch H2H stats: {str(e)}")
+
+    # team1's stats vs team2 (from "all teams vs team2" responses)
+    team1_result = process_h2h_team_stats(base_vs_t2, adv_vs_t2, team1_id)
+    # team2's stats vs team1 (from "all teams vs team1" responses)
+    team2_result = process_h2h_team_stats(base_vs_t1, adv_vs_t1, team2_id)
+
+    response = H2HStatsResponse(
+        team1=H2HTeamStats(**team1_result),
+        team2=H2HTeamStats(**team2_result),
+    )
+
+    _h2h_stats_cache[cache_key] = response
+    return response
+
+
+@router.get("/matchup/h2h-players", response_model=PlayerStatsResponse)
+async def get_h2h_players(
+    team1_id: str = Query(..., description="Team 1 ID"),
+    team2_id: str = Query(..., description="Team 2 ID"),
+    season_type: str = Query("Regular Season", description="Season type"),
+):
+    cache_key = f"h2h_players:{team1_id}:{team2_id}:{season_type}"
+    if cache_key in _h2h_players_cache:
+        return _h2h_players_cache[cache_key]
+
+    client = NBAClient()
+
+    try:
+        raw1, raw2 = await asyncio.gather(
+            client.get_season_player_vs_opponent(team_id=team1_id, opp_team_id=team2_id, season_type=season_type),
+            client.get_season_player_vs_opponent(team_id=team2_id, opp_team_id=team1_id, season_type=season_type),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Failed to fetch H2H player stats: {str(e)}")
+
+    team1_players = process_player_stats(raw1, [team1_id]).get(str(team1_id), [])
+    team2_players = process_player_stats(raw2, [team2_id]).get(str(team2_id), [])
+
+    response = PlayerStatsResponse(team1_players=team1_players, team2_players=team2_players)
+    _h2h_players_cache[cache_key] = response
     return response

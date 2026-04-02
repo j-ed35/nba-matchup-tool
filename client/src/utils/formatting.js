@@ -33,6 +33,13 @@ export function formatRank(rank) {
   return `#${rank}`;
 }
 
+export function formatOrdinal(n) {
+  if (n == null) return '';
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
 export function statDisplayName(key) {
   const names = {
     W: 'Wins', L: 'Losses', W_PCT: 'Win %',
@@ -42,6 +49,7 @@ export function statDisplayName(key) {
     OREB: 'Off Reb', DREB: 'Def Reb', PF: 'Fouls',
     OFF_RATING: 'Off Rating', DEF_RATING: 'Def Rating',
     NET_RATING: 'Net Rating', PACE: 'Pace',
+    TS_PCT: 'True Shooting %', EFG_PCT: 'Eff FG%',
     PTS_OFF_TOV: 'Pts Off TOV', PTS2ND_CHANCE: '2nd Chance Pts',
     PTS_FB: 'Fastbreak Pts', PTS_PAINT: 'Paint Pts',
     OPP_PTS_OFF_TOV: 'Opp Pts Off TOV', OPP_PTS2ND_CHANCE: 'Opp 2nd Chance',
