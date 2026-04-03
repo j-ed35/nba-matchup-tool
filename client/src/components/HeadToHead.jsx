@@ -16,96 +16,88 @@ export default function HeadToHead({ matchup }) {
   } else if (team2Wins > team1Wins) {
     seriesLabel = `${team2.abbreviation} leads ${team2Wins}-${team1Wins}`;
   } else {
-    seriesLabel = `Series tied ${team1Wins}-${team2Wins}`;
+    seriesLabel = `Tied ${team1Wins}-${team2Wins}`;
   }
 
   function buildBoxScoreUrl(game) {
     if (!game.game_id) return null;
-    // Determine home/away from the game - team1 is always the perspective team
-    // The URL format is: /game/{away}-vs-{home}-{gameId}/box-score
-    // We use lowercase abbreviations
     const t1Abbr = team1.abbreviation.toLowerCase();
     const t2Abbr = team2.abbreviation.toLowerCase();
-    // If team1 won at lower score position or team2 is listed second, use a simple format
     return `https://www.nba.com/game/${t2Abbr}-vs-${t1Abbr}-${game.game_id}/box-score`;
   }
 
   return (
-    <div className="bg-[var(--bg-secondary)] rounded-2xl p-6 xl:sticky xl:top-6 xl:self-start">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-white">Head-to-Head</h3>
+    <div className="py-4 xl:sticky xl:top-4 xl:self-start">
+      <div className="flex items-baseline justify-between mb-3">
+        <h4 className="text-[11px] font-medium text-[var(--text-muted)] uppercase tracking-widest">
+          Head-to-Head
+        </h4>
         <span
-          className="text-sm font-semibold px-3 py-1 rounded-full bg-white/5"
+          className="text-xs font-medium"
           style={{
             color:
               team1Wins > team2Wins
                 ? team1Info?.color
                 : team2Wins > team1Wins
                   ? team2Info?.color
-                  : 'var(--text-primary)',
+                  : 'var(--text-secondary)',
           }}
         >
           {seriesLabel}
         </span>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-gray-500 border-b border-[var(--border-color)]">
-              <th className="text-left py-2 px-3 font-medium">Date</th>
-              <th className="text-center py-2 px-3 font-medium" style={{ color: team1Info?.color }}>
-                {team1.abbreviation}
-              </th>
-              <th className="text-center py-2 px-3 font-medium" style={{ color: team2Info?.color }}>
-                {team2.abbreviation}
-              </th>
-              <th className="text-center py-2 px-3 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {h2h_games.map((game) => {
-              const t1Won = game.team1_wl === 'W';
-              const boxScoreUrl = buildBoxScoreUrl(game);
-              return (
-                <tr
-                  key={game.game_id}
-                  className="border-b border-[var(--border-color)]/30 hover:bg-white/[0.02]"
-                >
-                  <td className="py-2.5 px-3 text-gray-400">
-                    {new Date(game.date).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </td>
-                  <td
-                    className={`py-2.5 px-3 text-center tabular-nums ${t1Won ? 'font-bold text-white' : 'text-gray-500'}`}
-                  >
-                    {game.team1_pts}
-                  </td>
-                  <td
-                    className={`py-2.5 px-3 text-center tabular-nums ${!t1Won ? 'font-bold text-white' : 'text-gray-500'}`}
-                  >
-                    {game.team2_pts}
-                  </td>
-                  <td className="py-2.5 px-3 text-center">
-                    {boxScoreUrl && (
-                      <a
-                        href={boxScoreUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-blue-400 hover:text-blue-300 hover:underline"
-                      >
-                        Box Score
-                      </a>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="border-b border-[var(--border-color)]">
+            <th className="text-left pb-1.5 font-medium text-[var(--text-muted)]">Date</th>
+            <th className="text-right pb-1.5 font-medium" style={{ color: team1Info?.color }}>
+              {team1.abbreviation}
+            </th>
+            <th className="text-right pb-1.5 font-medium" style={{ color: team2Info?.color }}>
+              {team2.abbreviation}
+            </th>
+            <th className="text-right pb-1.5"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {h2h_games.map((game) => {
+            const t1Won = game.team1_wl === 'W';
+            const boxScoreUrl = buildBoxScoreUrl(game);
+            return (
+              <tr
+                key={game.game_id}
+                className="border-b border-[var(--border-color)]/20 hover:bg-white/[0.015] transition-colors"
+              >
+                <td className="py-1.5 text-[var(--text-muted)]">
+                  {new Date(game.date).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </td>
+                <td className={`py-1.5 text-right tabular-nums ${t1Won ? 'font-semibold text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
+                  {game.team1_pts}
+                </td>
+                <td className={`py-1.5 text-right tabular-nums ${!t1Won ? 'font-semibold text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
+                  {game.team2_pts}
+                </td>
+                <td className="py-1.5 text-right">
+                  {boxScoreUrl && (
+                    <a
+                      href={boxScoreUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
+                    >
+                      box
+                    </a>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }

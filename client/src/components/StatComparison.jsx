@@ -3,53 +3,20 @@ import { formatStat, formatRank, formatOrdinal, statDisplayName, LOWER_IS_BETTER
 import teams from '../data/nba_teams.json';
 
 const STAT_SECTIONS = [
-  {
-    title: 'Record',
-    stats: ['W', 'L', 'W_PCT'],
-  },
-  {
-    title: 'Scoring & Playmaking',
-    stats: ['PTS', 'REB', 'AST', 'STL', 'BLK', 'TOV'],
-  },
-  {
-    title: 'Shooting',
-    stats: ['FG_PCT', 'FG3_PCT', 'FT_PCT'],
-  },
-  {
-    title: 'Rebounding & Fouls',
-    stats: ['OREB', 'DREB', 'PF'],
-  },
-  {
-    title: 'Advanced',
-    stats: ['OFF_RATING', 'DEF_RATING', 'NET_RATING', 'PACE'],
-  },
-  {
-    title: 'Misc',
-    stats: ['PTS_OFF_TOV', 'PTS2ND_CHANCE', 'PTS_FB', 'PTS_PAINT'],
-  },
-  {
-    title: 'Opponent',
-    stats: ['OPP_PTS_OFF_TOV', 'OPP_PTS2ND_CHANCE', 'OPP_PTS_FB', 'OPP_PTS_PAINT'],
-  },
+  { title: 'Record', stats: ['W', 'L', 'W_PCT'] },
+  { title: 'Scoring & Playmaking', stats: ['PTS', 'REB', 'AST', 'STL', 'BLK', 'TOV'] },
+  { title: 'Shooting', stats: ['FG_PCT', 'FG3_PCT', 'FT_PCT'] },
+  { title: 'Rebounding & Fouls', stats: ['OREB', 'DREB', 'PF'] },
+  { title: 'Advanced', stats: ['OFF_RATING', 'DEF_RATING', 'NET_RATING', 'PACE'] },
+  { title: 'Misc', stats: ['PTS_OFF_TOV', 'PTS2ND_CHANCE', 'PTS_FB', 'PTS_PAINT'] },
+  { title: 'Opponent', stats: ['OPP_PTS_OFF_TOV', 'OPP_PTS2ND_CHANCE', 'OPP_PTS_FB', 'OPP_PTS_PAINT'] },
 ];
 
 const H2H_STAT_SECTIONS = [
-  {
-    title: 'Scoring & Playmaking',
-    stats: ['PTS', 'REB', 'AST', 'STL', 'BLK', 'TOV'],
-  },
-  {
-    title: 'Shooting',
-    stats: ['FG_PCT', 'FG3_PCT', 'FT_PCT'],
-  },
-  {
-    title: 'Rebounding & Fouls',
-    stats: ['OREB', 'DREB', 'PF'],
-  },
-  {
-    title: 'Advanced',
-    stats: ['OFF_RATING', 'DEF_RATING', 'NET_RATING', 'PACE', 'TS_PCT', 'EFG_PCT'],
-  },
+  { title: 'Scoring & Playmaking', stats: ['PTS', 'REB', 'AST', 'STL', 'BLK', 'TOV'] },
+  { title: 'Shooting', stats: ['FG_PCT', 'FG3_PCT', 'FT_PCT'] },
+  { title: 'Rebounding & Fouls', stats: ['OREB', 'DREB', 'PF'] },
+  { title: 'Advanced', stats: ['OFF_RATING', 'DEF_RATING', 'NET_RATING', 'PACE', 'TS_PCT', 'EFG_PCT'] },
 ];
 
 function isBetter(val1, val2, statKey) {
@@ -64,81 +31,45 @@ function StatRow({ statKey, team1Stats, team2Stats, team1Ranks, team2Ranks, team
   const t1Better = isBetter(val1, val2, statKey);
   const t2Better = isBetter(val2, val1, statKey);
 
-  if (h2hMode) {
-    const rank1 = team1Ranks?.[statKey];
-    const rank2 = team2Ranks?.[statKey];
-
-    return (
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center py-2 px-3 rounded-lg hover:bg-white/[0.02] transition-colors">
-        <div className="text-right flex items-center justify-end gap-2">
-          <span
-            className={`text-base tabular-nums ${t1Better ? 'font-bold' : 'text-gray-400'}`}
-            style={t1Better ? { color: team1Color } : undefined}
-          >
-            {formatStat(val1, statKey)}
-          </span>
-          {rank1 != null && (
-            <span className="text-[11px] text-gray-500">({formatOrdinal(rank1)})</span>
-          )}
-        </div>
-
-        <div className="px-4 text-center">
-          <span className="text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-            {statDisplayName(statKey)}
-          </span>
-        </div>
-
-        <div className="text-left flex items-center gap-2">
-          {rank2 != null && (
-            <span className="text-[11px] text-gray-500">({formatOrdinal(rank2)})</span>
-          )}
-          <span
-            className={`text-base tabular-nums ${t2Better ? 'font-bold' : 'text-gray-400'}`}
-            style={t2Better ? { color: team2Color } : undefined}
-          >
-            {formatStat(val2, statKey)}
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  // Season mode
-  const rank1 = team1Ranks?.[`${statKey}_RANK`];
-  const rank2 = team2Ranks?.[`${statKey}_RANK`];
+  const rank1 = h2hMode ? team1Ranks?.[statKey] : team1Ranks?.[`${statKey}_RANK`];
+  const rank2 = h2hMode ? team2Ranks?.[statKey] : team2Ranks?.[`${statKey}_RANK`];
 
   return (
-    <div className="grid grid-cols-[1fr_auto_1fr] items-center py-2 px-3 rounded-lg hover:bg-white/[0.02] transition-colors">
-      <div className="text-right flex items-center justify-end gap-2">
+    <tr className="border-b border-[var(--border-color)]/30 hover:bg-white/[0.015] transition-colors">
+      <td className="py-1.5 pr-4 text-xs text-[var(--text-muted)] whitespace-nowrap">
+        {statDisplayName(statKey)}
+      </td>
+      <td className="py-1.5 px-2 text-right tabular-nums w-12">
         {rank1 != null && (
-          <span className="text-xs text-gray-500">{formatRank(rank1)}</span>
+          <span className="text-[10px] text-[var(--text-muted)]">
+            {h2hMode ? formatOrdinal(rank1) : formatRank(rank1)}
+          </span>
         )}
+      </td>
+      <td className="py-1.5 px-2 text-right tabular-nums">
         <span
-          className={`text-base tabular-nums ${t1Better ? 'font-bold' : 'text-gray-400'}`}
+          className={`text-sm ${t1Better ? 'font-semibold' : 'text-[var(--text-muted)]'}`}
           style={t1Better ? { color: team1Color } : undefined}
         >
           {formatStat(val1, statKey)}
         </span>
-      </div>
-
-      <div className="px-4 text-center">
-        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-          {statDisplayName(statKey)}
-        </span>
-      </div>
-
-      <div className="text-left flex items-center gap-2">
+      </td>
+      <td className="py-1.5 px-2 text-right tabular-nums">
         <span
-          className={`text-base tabular-nums ${t2Better ? 'font-bold' : 'text-gray-400'}`}
+          className={`text-sm ${t2Better ? 'font-semibold' : 'text-[var(--text-muted)]'}`}
           style={t2Better ? { color: team2Color } : undefined}
         >
           {formatStat(val2, statKey)}
         </span>
+      </td>
+      <td className="py-1.5 pl-2 text-left tabular-nums w-12">
         {rank2 != null && (
-          <span className="text-xs text-gray-500">{formatRank(rank2)}</span>
+          <span className="text-[10px] text-[var(--text-muted)]">
+            {h2hMode ? formatOrdinal(rank2) : formatRank(rank2)}
+          </span>
         )}
-      </div>
-    </div>
+      </td>
+    </tr>
   );
 }
 
@@ -150,10 +81,10 @@ export default function StatComparison({ matchup, h2hStats, mode = 'season' }) {
 
   if (!data) return null;
 
-  const team1Id = isH2H ? null : data.team1.id;
-  const team2Id = isH2H ? null : data.team2.id;
   const team1Abbr = data.team1.abbreviation;
   const team2Abbr = data.team2.abbreviation;
+  const team1Id = isH2H ? null : data.team1.id;
+  const team2Id = isH2H ? null : data.team2.id;
 
   const team1Info = isH2H
     ? teams.find((t) => t.abbreviation === team1Abbr)
@@ -164,7 +95,6 @@ export default function StatComparison({ matchup, h2hStats, mode = 'season' }) {
 
   const team1Color = team1Info?.color || '#3b82f6';
   const team2Color = team2Info?.color || '#ef4444';
-
   const team1Stats = data.team1.stats;
   const team2Stats = data.team2.stats;
   const team1Ranks = isH2H ? data.team1.ranks : data.team1.stats_ranks;
@@ -175,90 +105,75 @@ export default function StatComparison({ matchup, h2hStats, mode = 'season' }) {
   const canNext = sectionIndex < sections.length - 1;
 
   return (
-    <div className="bg-[var(--bg-secondary)] rounded-2xl p-6">
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-6 pb-4 border-b border-[var(--border-color)]">
-        <div className="text-right">
-          <span className="text-lg font-bold" style={{ color: team1Color }}>
-            {team1Abbr}
-          </span>
-        </div>
-        <div className="px-4">
-          <span className="text-sm font-medium text-gray-500">VS</span>
-        </div>
-        <div className="text-left">
-          <span className="text-lg font-bold" style={{ color: team2Color }}>
-            {team2Abbr}
-          </span>
-        </div>
-      </div>
-
-      {isH2H && (
-        <div className="text-center mb-4">
-          <span className="text-xs text-gray-500">
-            Based on {data.team1.gamesPlayed} game{data.team1.gamesPlayed !== 1 ? 's' : ''} played
-          </span>
-          <span className="text-xs text-gray-600 ml-2">
-            &middot; Rankings among all 30 teams vs opponent
-          </span>
-        </div>
-      )}
-
-      {/* Section header with navigation arrows */}
-      <div className="flex items-center justify-between mb-2 px-3">
-        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
+    <div className="py-4">
+      {/* Section nav */}
+      <div className="flex items-center gap-3 mb-3">
+        <h4 className="text-[11px] font-medium text-[var(--text-muted)] uppercase tracking-widest">
           {currentSection.title}
         </h4>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 ml-auto">
+          {sections.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setSectionIndex(i)}
+              className={`w-1 h-1 rounded-full transition-colors cursor-pointer ${
+                i === sectionIndex ? 'bg-[var(--text-secondary)]' : 'bg-[var(--border-color)] hover:bg-[var(--text-muted)]'
+              }`}
+            />
+          ))}
           <button
             onClick={() => canPrev && setSectionIndex(sectionIndex - 1)}
             disabled={!canPrev}
-            className={`w-7 h-7 flex items-center justify-center rounded-md transition-colors ${
-              canPrev ? 'text-gray-300 hover:bg-white/10 hover:text-white cursor-pointer' : 'text-gray-700 cursor-default'
-            }`}
+            className={`ml-1 text-xs cursor-pointer ${canPrev ? 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]' : 'text-[var(--border-color)]'}`}
           >
-            ←
+            &larr;
           </button>
           <button
             onClick={() => canNext && setSectionIndex(sectionIndex + 1)}
             disabled={!canNext}
-            className={`w-7 h-7 flex items-center justify-center rounded-md transition-colors ${
-              canNext ? 'text-gray-300 hover:bg-white/10 hover:text-white cursor-pointer' : 'text-gray-700 cursor-default'
-            }`}
+            className={`text-xs cursor-pointer ${canNext ? 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]' : 'text-[var(--border-color)]'}`}
           >
-            →
+            &rarr;
           </button>
         </div>
       </div>
 
-      {/* Section dots indicator */}
-      <div className="flex justify-center gap-1.5 mb-3">
-        {sections.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setSectionIndex(i)}
-            className={`w-1.5 h-1.5 rounded-full transition-colors ${
-              i === sectionIndex ? 'bg-gray-300' : 'bg-gray-700 hover:bg-gray-500'
-            }`}
-          />
-        ))}
-      </div>
+      {isH2H && (
+        <p className="text-[10px] text-[var(--text-muted)] mb-2">
+          {data.team1.gamesPlayed} game{data.team1.gamesPlayed !== 1 ? 's' : ''} played
+        </p>
+      )}
 
-      {/* Current section stats */}
-      <div className="divide-y divide-[var(--border-color)]/30">
-        {currentSection.stats.map((statKey) => (
-          <StatRow
-            key={statKey}
-            statKey={statKey}
-            team1Stats={team1Stats}
-            team2Stats={team2Stats}
-            team1Ranks={team1Ranks}
-            team2Ranks={team2Ranks}
-            team1Color={team1Color}
-            team2Color={team2Color}
-            h2hMode={isH2H}
-          />
-        ))}
-      </div>
+      <table className="w-full">
+        <thead>
+          <tr className="border-b border-[var(--border-color)]">
+            <th className="text-left text-[10px] font-medium text-[var(--text-muted)] uppercase pb-1.5 pr-4">Stat</th>
+            <th className="w-12"></th>
+            <th className="text-right text-[10px] font-medium pb-1.5 px-2" style={{ color: team1Color }}>
+              {team1Abbr}
+            </th>
+            <th className="text-right text-[10px] font-medium pb-1.5 px-2" style={{ color: team2Color }}>
+              {team2Abbr}
+            </th>
+            <th className="w-12"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {currentSection.stats.map((statKey) => (
+            <StatRow
+              key={statKey}
+              statKey={statKey}
+              team1Stats={team1Stats}
+              team2Stats={team2Stats}
+              team1Ranks={team1Ranks}
+              team2Ranks={team2Ranks}
+              team1Color={team1Color}
+              team2Color={team2Color}
+              h2hMode={isH2H}
+            />
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
