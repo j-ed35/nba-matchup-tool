@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { formatStat, formatRank, formatOrdinal, statDisplayName, LOWER_IS_BETTER } from '../utils/formatting';
 import teams from '../data/nba_teams.json';
 
@@ -102,7 +103,7 @@ function StatRow({ statKey, team1Stats, team2Stats, team1Ranks, team2Ranks, team
     );
   }
 
-  // Season mode (original)
+  // Season mode
   const rank1 = team1Ranks?.[`${statKey}_RANK`];
   const rank2 = team2Ranks?.[`${statKey}_RANK`];
 
@@ -144,6 +145,8 @@ function StatRow({ statKey, team1Stats, team2Stats, team1Ranks, team2Ranks, team
 export default function StatComparison({ matchup, h2hStats, mode = 'season' }) {
   const isH2H = mode === 'h2h';
   const data = isH2H ? h2hStats : matchup;
+  const sections = isH2H ? H2H_STAT_SECTIONS : STAT_SECTIONS;
+  const [sectionIndex, setSectionIndex] = useState(0);
 
   if (!data) return null;
 
@@ -152,7 +155,6 @@ export default function StatComparison({ matchup, h2hStats, mode = 'season' }) {
   const team1Abbr = data.team1.abbreviation;
   const team2Abbr = data.team2.abbreviation;
 
-  // In H2H mode, look up team info by abbreviation; in season mode by id
   const team1Info = isH2H
     ? teams.find((t) => t.abbreviation === team1Abbr)
     : teams.find((t) => t.id === team1Id);
@@ -163,12 +165,14 @@ export default function StatComparison({ matchup, h2hStats, mode = 'season' }) {
   const team1Color = team1Info?.color || '#3b82f6';
   const team2Color = team2Info?.color || '#ef4444';
 
-  const sections = isH2H ? H2H_STAT_SECTIONS : STAT_SECTIONS;
-
   const team1Stats = data.team1.stats;
   const team2Stats = data.team2.stats;
   const team1Ranks = isH2H ? data.team1.ranks : data.team1.stats_ranks;
   const team2Ranks = isH2H ? data.team2.ranks : data.team2.stats_ranks;
+
+  const currentSection = sections[sectionIndex];
+  const canPrev = sectionIndex > 0;
+  const canNext = sectionIndex < sections.length - 1;
 
   return (
     <div className="bg-[var(--bg-secondary)] rounded-2xl p-6">
@@ -193,36 +197,68 @@ export default function StatComparison({ matchup, h2hStats, mode = 'season' }) {
           <span className="text-xs text-gray-500">
             Based on {data.team1.gamesPlayed} game{data.team1.gamesPlayed !== 1 ? 's' : ''} played
           </span>
-          {isH2H && (
-            <span className="text-xs text-gray-600 ml-2">
-              &middot; Rankings among all 30 teams vs opponent
-            </span>
-          )}
+          <span className="text-xs text-gray-600 ml-2">
+            &middot; Rankings among all 30 teams vs opponent
+          </span>
         </div>
       )}
 
-      {sections.map((section) => (
-        <div key={section.title} className="mb-4">
-          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2 px-3">
-            {section.title}
-          </h4>
-          <div className="divide-y divide-[var(--border-color)]/30">
-            {section.stats.map((statKey) => (
-              <StatRow
-                key={statKey}
-                statKey={statKey}
-                team1Stats={team1Stats}
-                team2Stats={team2Stats}
-                team1Ranks={team1Ranks}
-                team2Ranks={team2Ranks}
-                team1Color={team1Color}
-                team2Color={team2Color}
-                h2hMode={isH2H}
-              />
-            ))}
-          </div>
+      {/* Section header with navigation arrows */}
+      <div className="flex items-center justify-between mb-2 px-3">
+        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
+          {currentSection.title}
+        </h4>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => canPrev && setSectionIndex(sectionIndex - 1)}
+            disabled={!canPrev}
+            className={`w-7 h-7 flex items-center justify-center rounded-md transition-colors ${
+              canPrev ? 'text-gray-300 hover:bg-white/10 hover:text-white cursor-pointer' : 'text-gray-700 cursor-default'
+            }`}
+          >
+            ←
+          </button>
+          <button
+            onClick={() => canNext && setSectionIndex(sectionIndex + 1)}
+            disabled={!canNext}
+            className={`w-7 h-7 flex items-center justify-center rounded-md transition-colors ${
+              canNext ? 'text-gray-300 hover:bg-white/10 hover:text-white cursor-pointer' : 'text-gray-700 cursor-default'
+            }`}
+          >
+            →
+          </button>
         </div>
-      ))}
+      </div>
+
+      {/* Section dots indicator */}
+      <div className="flex justify-center gap-1.5 mb-3">
+        {sections.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setSectionIndex(i)}
+            className={`w-1.5 h-1.5 rounded-full transition-colors ${
+              i === sectionIndex ? 'bg-gray-300' : 'bg-gray-700 hover:bg-gray-500'
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* Current section stats */}
+      <div className="divide-y divide-[var(--border-color)]/30">
+        {currentSection.stats.map((statKey) => (
+          <StatRow
+            key={statKey}
+            statKey={statKey}
+            team1Stats={team1Stats}
+            team2Stats={team2Stats}
+            team1Ranks={team1Ranks}
+            team2Ranks={team2Ranks}
+            team1Color={team1Color}
+            team2Color={team2Color}
+            h2hMode={isH2H}
+          />
+        ))}
+      </div>
     </div>
   );
 }

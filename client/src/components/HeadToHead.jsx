@@ -19,6 +19,17 @@ export default function HeadToHead({ matchup }) {
     seriesLabel = `Series tied ${team1Wins}-${team2Wins}`;
   }
 
+  function buildBoxScoreUrl(game) {
+    if (!game.game_id) return null;
+    // Determine home/away from the game - team1 is always the perspective team
+    // The URL format is: /game/{away}-vs-{home}-{gameId}/box-score
+    // We use lowercase abbreviations
+    const t1Abbr = team1.abbreviation.toLowerCase();
+    const t2Abbr = team2.abbreviation.toLowerCase();
+    // If team1 won at lower score position or team2 is listed second, use a simple format
+    return `https://www.nba.com/game/${t2Abbr}-vs-${t1Abbr}-${game.game_id}/box-score`;
+  }
+
   return (
     <div className="bg-[var(--bg-secondary)] rounded-2xl p-6 xl:sticky xl:top-6 xl:self-start">
       <div className="flex items-center justify-between mb-4">
@@ -49,12 +60,13 @@ export default function HeadToHead({ matchup }) {
               <th className="text-center py-2 px-3 font-medium" style={{ color: team2Info?.color }}>
                 {team2.abbreviation}
               </th>
-              <th className="text-center py-2 px-3 font-medium">Result</th>
+              <th className="text-center py-2 px-3 font-medium"></th>
             </tr>
           </thead>
           <tbody>
             {h2h_games.map((game) => {
               const t1Won = game.team1_wl === 'W';
+              const boxScoreUrl = buildBoxScoreUrl(game);
               return (
                 <tr
                   key={game.game_id}
@@ -77,17 +89,16 @@ export default function HeadToHead({ matchup }) {
                     {game.team2_pts}
                   </td>
                   <td className="py-2.5 px-3 text-center">
-                    <span
-                      className="text-xs font-bold px-2 py-0.5 rounded"
-                      style={{
-                        color: t1Won ? team1Info?.color : team2Info?.color,
-                        backgroundColor: t1Won
-                          ? `${team1Info?.color}20`
-                          : `${team2Info?.color}20`,
-                      }}
-                    >
-                      {t1Won ? team1.abbreviation : team2.abbreviation} W
-                    </span>
+                    {boxScoreUrl && (
+                      <a
+                        href={boxScoreUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-400 hover:text-blue-300 hover:underline"
+                      >
+                        Box Score
+                      </a>
+                    )}
                   </td>
                 </tr>
               );

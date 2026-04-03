@@ -3,6 +3,7 @@ import teams from '../data/nba_teams.json';
 
 const COLUMNS = [
   { key: 'player_name', label: 'Player', align: 'left' },
+  { key: 'GP', label: 'GP', format: (v) => v != null ? Math.round(v) : '-' },
   { key: 'MIN', label: 'MPG', format: (v) => v?.toFixed(1) },
   { key: 'PTS', label: 'PPG', format: (v) => v?.toFixed(1) },
   { key: 'REB', label: 'RPG', format: (v) => v?.toFixed(1) },
