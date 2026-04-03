@@ -9,7 +9,6 @@ class NBAClient:
     """Client for the official NBA API (api.nba.com/v0)."""
 
     BASE_URL = "https://api.nba.com/v0"
-    QUERYTOOL_BASE_URL = "https://api.nba.com/v1"
     LEAGUE_ID = "00"
 
     def __init__(self):
@@ -70,7 +69,7 @@ class NBAClient:
 
     async def get_h2h_games(self, team_id: str, opp_team_id: str, season: str = None, season_type: str = "Regular Season", measure_type: str = "Base") -> dict:
         season = season or self._get_current_season()
-        url = f"{self.QUERYTOOL_BASE_URL}/api/querytool/game/team"
+        url = f"{self.BASE_URL}/api/querytool/game/team"
         params = {
             "leagueId": self.LEAGUE_ID, "seasonYear": season, "seasonType": season_type,
             "measureType": measure_type, "TeamId": team_id, "oppTeamId": opp_team_id,
@@ -87,7 +86,7 @@ class NBAClient:
         """Get ALL teams' season stats filtered to games vs a specific opponent.
         Returns all 30 teams — used to compute league-wide rankings."""
         season = season or self._get_current_season()
-        url = f"{self.QUERYTOOL_BASE_URL}/api/querytool/season/team"
+        url = f"{self.BASE_URL}/api/querytool/season/team"
         params = {
             "leagueId": self.LEAGUE_ID, "SeasonYear": season, "SeasonType": season_type,
             "PerMode": per_mode, "Grouping": "None", "MeasureType": measure_type,
@@ -104,7 +103,7 @@ class NBAClient:
                                              season_type: str = "Regular Season") -> dict:
         """Get player stats for a specific team, filtered to games vs a specific opponent."""
         season = season or self._get_current_season()
-        url = f"{self.QUERYTOOL_BASE_URL}/api/querytool/season/player"
+        url = f"{self.BASE_URL}/api/querytool/season/player"
         params = {
             "leagueId": self.LEAGUE_ID, "SeasonYear": season, "SeasonType": season_type,
             "PerMode": per_mode, "Grouping": "None", "TeamGrouping": "N",
@@ -117,7 +116,7 @@ class NBAClient:
 
     async def get_h2h_player_games(self, team_id: str, opp_team_id: str, season: str = None, season_type: str = "Regular Season", measure_type: str = "Base") -> dict:
         season = season or self._get_current_season()
-        url = f"{self.QUERYTOOL_BASE_URL}/api/querytool/game/player"
+        url = f"{self.BASE_URL}/api/querytool/game/player"
         params = {
             "leagueId": self.LEAGUE_ID, "seasonYear": season, "seasonType": season_type,
             "measureType": measure_type, "TeamId": team_id, "oppTeamId": opp_team_id,

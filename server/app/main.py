@@ -26,4 +26,13 @@ app.include_router(players.router, prefix="/api", tags=["players"])
 
 @app.get("/api/health")
 async def health_check():
-    return {"status": "ok"}
+    from app.config import Config
+    return {
+        "status": "ok",
+        "keys_configured": {
+            "NBA_API_KEY": bool(Config.NBA_API_KEY),
+            "NBA_STANDINGS_KEY": bool(Config.NBA_STANDINGS_KEY),
+            "QUERY_TOOL_API_KEY": bool(Config.QUERY_TOOL_API_KEY),
+            "STATS_API_KEY": bool(Config.STATS_API_KEY),
+        }
+    }
