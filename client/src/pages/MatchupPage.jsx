@@ -3,39 +3,39 @@ import TeamSelector from '../components/TeamSelector';
 import StatComparison from '../components/StatComparison';
 import HeadToHead from '../components/HeadToHead';
 import PlayerStats from '../components/PlayerStats';
+import RadarChart from '../components/RadarChart';
 import { useMatchupData } from '../hooks/useMatchupData';
 import teams from '../data/nba_teams.json';
 
-function MatchupHeader({ team1Id, team2Id, standings, mode, onModeChange }) {
-  const team1 = teams.find((t) => t.id === team1Id);
-  const team2 = teams.find((t) => t.id === team2Id);
-  const standingsList = standings?.standings || [];
-  const t1Standing = standingsList.find((s) => String(s.team_id) === String(team1Id));
-  const t2Standing = standingsList.find((s) => String(s.team_id) === String(team2Id));
+function MatchupHeader({ matchup, mode, onModeChange }) {
+  const team1 = teams.find((t) => t.id === matchup.team1.id);
+  const team2 = teams.find((t) => t.id === matchup.team2.id);
 
   return (
     <div className="flex items-center justify-between py-4 border-b border-[var(--border-color)]">
       <div className="flex items-baseline gap-3">
-        <div className="flex items-baseline gap-2">
-          <span className="text-lg font-semibold" style={{ color: team1?.color }}>
-            {team1?.abbreviation}
-          </span>
-          {t1Standing && (
-            <span className="text-xs text-[var(--text-muted)]">
-              {t1Standing.wins}-{t1Standing.losses}
-            </span>
+        <div className="flex items-baseline gap-1.5">
+          {matchup.team1.conf_rank != null && (
+            <span className="text-xs text-[var(--text-muted)]">#{matchup.team1.conf_rank}</span>
           )}
+          <span className="text-lg font-semibold" style={{ color: team1?.color }}>
+            {matchup.team1.abbreviation}
+          </span>
+          <span className="text-xs text-[var(--text-muted)]">
+            {matchup.team1.record}
+          </span>
         </div>
         <span className="text-xs text-[var(--text-muted)] uppercase">vs</span>
-        <div className="flex items-baseline gap-2">
-          <span className="text-lg font-semibold" style={{ color: team2?.color }}>
-            {team2?.abbreviation}
-          </span>
-          {t2Standing && (
-            <span className="text-xs text-[var(--text-muted)]">
-              {t2Standing.wins}-{t2Standing.losses}
-            </span>
+        <div className="flex items-baseline gap-1.5">
+          {matchup.team2.conf_rank != null && (
+            <span className="text-xs text-[var(--text-muted)]">#{matchup.team2.conf_rank}</span>
           )}
+          <span className="text-lg font-semibold" style={{ color: team2?.color }}>
+            {matchup.team2.abbreviation}
+          </span>
+          <span className="text-xs text-[var(--text-muted)]">
+            {matchup.team2.record}
+          </span>
         </div>
       </div>
       <div className="flex gap-1">
@@ -94,11 +94,9 @@ export default function MatchupPage() {
       </header>
 
       <main className="max-w-[1400px] mx-auto px-5">
-        {hasTeams && (matchup || h2hStats) && !loading && (
+        {hasTeams && matchup && !loading && (
           <MatchupHeader
-            team1Id={team1Id}
-            team2Id={team2Id}
-            standings={standings}
+            matchup={matchup}
             mode={mode}
             onModeChange={setMode}
           />
@@ -141,6 +139,9 @@ export default function MatchupPage() {
             </div>
             <div className="xl:border-l border-[var(--border-color)] xl:pl-5">
               {matchup && <HeadToHead matchup={matchup} />}
+              {matchup && (
+                <RadarChart matchup={matchup} h2hStats={h2hStats} mode={mode} />
+              )}
             </div>
           </div>
         )}
