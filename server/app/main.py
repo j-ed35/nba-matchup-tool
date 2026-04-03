@@ -8,7 +8,11 @@ app = FastAPI(title="NBA Matchup Tool API", version="1.0.0")
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://matchuptool.vercel.app",
+        "https://matchuptool-jacobs-projects-eda823cc.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
