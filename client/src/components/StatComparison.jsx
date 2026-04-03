@@ -4,18 +4,18 @@ import teams from '../data/nba_teams.json';
 
 const STAT_SECTIONS = [
   { title: 'Record', stats: ['W', 'L', 'W_PCT'] },
-  { title: 'Scoring & Playmaking', stats: ['PTS', 'REB', 'AST', 'STL', 'BLK', 'TOV'] },
+  { title: 'Base', stats: ['PTS', 'REB', 'AST', 'STL', 'BLK', 'TOV'] },
   { title: 'Shooting', stats: ['FG_PCT', 'FG3_PCT', 'FT_PCT'] },
-  { title: 'Rebounding & Fouls', stats: ['OREB', 'DREB', 'PF'] },
+  { title: 'REB & Fouls', stats: ['OREB', 'DREB', 'PF'] },
   { title: 'Advanced', stats: ['OFF_RATING', 'DEF_RATING', 'NET_RATING', 'PACE'] },
   { title: 'Misc', stats: ['PTS_OFF_TOV', 'PTS2ND_CHANCE', 'PTS_FB', 'PTS_PAINT'] },
   { title: 'Opponent', stats: ['OPP_PTS_OFF_TOV', 'OPP_PTS2ND_CHANCE', 'OPP_PTS_FB', 'OPP_PTS_PAINT'] },
 ];
 
 const H2H_STAT_SECTIONS = [
-  { title: 'Scoring & Playmaking', stats: ['PTS', 'REB', 'AST', 'STL', 'BLK', 'TOV'] },
+  { title: 'Base', stats: ['PTS', 'REB', 'AST', 'STL', 'BLK', 'TOV'] },
   { title: 'Shooting', stats: ['FG_PCT', 'FG3_PCT', 'FT_PCT'] },
-  { title: 'Rebounding & Fouls', stats: ['OREB', 'DREB', 'PF'] },
+  { title: 'REB & Fouls', stats: ['OREB', 'DREB', 'PF'] },
   { title: 'Advanced', stats: ['OFF_RATING', 'DEF_RATING', 'NET_RATING', 'PACE', 'TS_PCT', 'EFG_PCT'] },
 ];
 
