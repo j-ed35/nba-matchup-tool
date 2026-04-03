@@ -21,7 +21,7 @@ export default function MatchupPage() {
     <div className="min-h-screen bg-[var(--bg-primary)]">
       {/* Header */}
       <header className="border-b border-[var(--border-color)] bg-[var(--bg-secondary)]">
-        <div className="max-w-7xl mx-auto px-6 py-5">
+        <div className="max-w-[1600px] mx-auto px-6 py-5">
           <h1 className="text-2xl font-bold text-white tracking-tight">
             NBA Matchup Tool
           </h1>
@@ -31,7 +31,7 @@ export default function MatchupPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-[1600px] mx-auto px-6 py-8">
         {/* Team Selection */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
           <div className="space-y-4">
@@ -55,7 +55,7 @@ export default function MatchupPage() {
           </div>
         </div>
 
-        {/* Mode Toggle - only show when both teams are selected */}
+        {/* Mode Toggle */}
         {hasTeams && (matchup || h2hStats) && !loading && (
           <ModeToggle mode={mode} onModeChange={setMode} />
         )}
@@ -85,18 +85,18 @@ export default function MatchupPage() {
           </div>
         )}
 
-        {/* Matchup Content */}
+        {/* Matchup Content - 2-column layout on large screens */}
         {!loading && (
-          <div className="space-y-8">
-            {/* StatComparison: show season or H2H based on mode */}
+          <div className="space-y-6">
+            {/* Top row: Stats + H2H Games side by side */}
             {(isH2H ? h2hStats : matchup) && (
-              <StatComparison matchup={matchup} h2hStats={h2hStats} mode={mode} />
+              <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-6">
+                <StatComparison matchup={matchup} h2hStats={h2hStats} mode={mode} />
+                {matchup && <HeadToHead matchup={matchup} />}
+              </div>
             )}
 
-            {/* HeadToHead game results: visible in both modes */}
-            {matchup && <HeadToHead matchup={matchup} />}
-
-            {/* PlayerStats: show season or H2H based on mode */}
+            {/* Player Stats full width below */}
             {isH2H ? (
               h2hPlayers && h2hStats && (
                 <PlayerStats players={h2hPlayers} matchup={h2hStats} mode="h2h" />

@@ -1,28 +1,37 @@
 from __future__ import annotations
 
-import re
-
 
 LOWER_IS_BETTER = {"TOV", "PF", "DEF_RATING"}
 
-
-def _camel_to_upper_snake(name: str) -> str:
-    s1 = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1_\2', name)
-    s2 = re.sub(r'([a-z\d])([A-Z])', r'\1_\2', s1)
-    return s2.upper()
+# Map raw API stat keys to the keys the frontend expects
+STAT_KEY_MAP = {
+    "PTS_PG": "PTS",
+    "REB_PG": "REB",
+    "AST_PG": "AST",
+    "STL_PG": "STL",
+    "BLK_PG": "BLK",
+    "TOV_PG": "TOV",
+    "OREB_PG": "OREB",
+    "DREB_PG": "DREB",
+    "PF_PG": "PF",
+    "FG_PCT_PG": "FG_PCT",
+    "FG3_PCT_PG": "FG3_PCT",
+    "FT_PCT_PG": "FT_PCT",
+    "PLUS_MINUS_PG": "PLUS_MINUS",
+    # Advanced stats (no _PG suffix)
+    "OFF_RATING": "OFF_RATING",
+    "DEF_RATING": "DEF_RATING",
+    "NET_RATING": "NET_RATING",
+    "PACE": "PACE",
+    "TS_PCT": "TS_PCT",
+    "EFG_PCT": "EFG_PCT",
+    "GP": "GP",
+}
 
 
 def process_h2h_team_stats(base_data: dict, advanced_data: dict, team_id: str) -> dict:
     """
     Process querytool /season/team responses to extract a team's H2H stats and league-wide rankings.
-
-    Args:
-        base_data: Response from querytool with MeasureType=Base (all teams vs opponent)
-        advanced_data: Response from querytool with MeasureType=Advanced (all teams vs opponent)
-        team_id: The team whose stats and ranks we want
-
-    Returns:
-        {"stats": {...}, "ranks": {...}, "gamesPlayed": int, "abbreviation": str}
     """
     all_teams: dict[str, dict] = {}
 
@@ -41,11 +50,12 @@ def process_h2h_team_stats(base_data: dict, advanced_data: dict, team_id: str) -
                 }
 
             stats_obj = team_obj.get("stats", {})
-            for key, value in stats_obj.items():
-                snake_key = _camel_to_upper_snake(key)
-                if not snake_key.endswith("_RANK"):
-                    all_teams[tid]["stats"][snake_key] = value
-                    if snake_key == "GP" and value:
+            for raw_key, value in stats_obj.items():
+                # Map to frontend-expected key, or keep as-is
+                mapped_key = STAT_KEY_MAP.get(raw_key, raw_key)
+                if not mapped_key.endswith("_RANK"):
+                    all_teams[tid]["stats"][mapped_key] = value
+                    if mapped_key == "GP" and value:
                         try:
                             all_teams[tid]["gp"] = int(value)
                         except (ValueError, TypeError):

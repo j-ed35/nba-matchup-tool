@@ -20,7 +20,7 @@ export default function HeadToHead({ matchup }) {
   }
 
   return (
-    <div className="bg-[var(--bg-secondary)] rounded-2xl p-6">
+    <div className="bg-[var(--bg-secondary)] rounded-2xl p-6 xl:sticky xl:top-6 xl:self-start">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-white">Head-to-Head</h3>
         <span
