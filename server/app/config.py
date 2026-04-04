@@ -17,6 +17,6 @@ else:
 
 class Config:
     NBA_API_KEY: str = os.getenv("SCOREBOARD_API_KEY", "")
-    NBA_STANDINGS_KEY: str = os.getenv("STANDINGS_API_KEY", "")
+    NBA_STANDINGS_KEY: str = os.getenv("NBA_STANDINGS_KEY", "") or os.getenv("STANDINGS_API_KEY", "")
     QUERY_TOOL_API_KEY: str = os.getenv("QUERYTOOL_API_KEY", "")
     STATS_API_KEY: str = os.getenv("STATS_API_KEY", "")

@@ -114,6 +114,19 @@ class NBAClient:
             response.raise_for_status()
             return response.json()
 
+    async def get_playoff_bracket(self, season: str = None) -> dict:
+        season = season or self._get_current_season()
+        url = f"{self.BASE_URL}/api/standings/playoff/bracket"
+        params = {
+            "leagueId": self.LEAGUE_ID,
+            "season": season,
+            "bracketState": "PlayoffPicture",
+        }
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=self._standings_headers(), params=params, timeout=10)
+            response.raise_for_status()
+            return response.json()
+
     async def get_h2h_player_games(self, team_id: str, opp_team_id: str, season: str = None, season_type: str = "Regular Season", measure_type: str = "Base") -> dict:
         season = season or self._get_current_season()
         url = f"{self.BASE_URL}/api/querytool/game/player"

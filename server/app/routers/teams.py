@@ -6,6 +6,7 @@ from app.services.nba_client import NBAClient
 router = APIRouter()
 
 _standings_cache = TTLCache(maxsize=4, ttl=3600)
+_bracket_cache = TTLCache(maxsize=4, ttl=900)
 
 
 @router.get("/standings")
@@ -46,4 +47,22 @@ async def get_standings(season_type: str = "Regular Season"):
 
     result = {"standings": standings}
     _standings_cache[cache_key] = result
+    return result
+
+
+@router.get("/playoff-bracket")
+async def get_playoff_bracket():
+    cache_key = "playoff_bracket"
+
+    if cache_key in _bracket_cache:
+        return _bracket_cache[cache_key]
+
+    client = NBAClient()
+    try:
+        raw = await client.get_playoff_bracket()
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Failed to fetch playoff bracket: {str(e)}")
+
+    result = raw
+    _bracket_cache[cache_key] = result
     return result

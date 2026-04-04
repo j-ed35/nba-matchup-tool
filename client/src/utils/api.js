@@ -38,6 +38,10 @@ export function getH2HStats(team1Id, team2Id) {
   return fetchJSON(`/matchup/h2h-stats?${params}`);
 }
 
+export function getPlayoffBracket() {
+  return fetchJSON('/playoff-bracket');
+}
+
 export function getH2HPlayers(team1Id, team2Id) {
   const params = new URLSearchParams({
     team1_id: team1Id,

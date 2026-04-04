@@ -4,6 +4,7 @@ import StatComparison from '../components/StatComparison';
 import HeadToHead from '../components/HeadToHead';
 import PlayerStats from '../components/PlayerStats';
 import RadarChart from '../components/RadarChart';
+import PlayoffBracket from '../components/PlayoffBracket';
 import { useMatchupData } from '../hooks/useMatchupData';
 import teams from '../data/nba_teams.json';
 
@@ -117,10 +118,11 @@ export default function MatchupPage() {
           </div>
         )}
 
-        {!team1Id && !team2Id && !loading && (
-          <div className="flex items-center justify-center py-20">
-            <p className="text-sm text-[var(--text-muted)]">Select two teams to compare</p>
-          </div>
+        {!hasTeams && !loading && (
+          <PlayoffBracket onSelectTeam={(teamId) => {
+            if (!team1Id) setTeam1Id(teamId);
+            else if (!team2Id && teamId !== team1Id) setTeam2Id(teamId);
+          }} />
         )}
 
         {!loading && (isH2H ? h2hStats : matchup) && (
