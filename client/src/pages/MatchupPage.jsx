@@ -71,11 +71,25 @@ export default function MatchupPage() {
     <div className="min-h-screen bg-[var(--bg-primary)]">
       <header className="border-b border-[var(--border-color)]">
         <div className="max-w-[1400px] mx-auto px-5 py-3 flex items-center justify-between">
-          <div className="shrink-0">
-            <h1 className="text-sm font-semibold text-[var(--text-primary)] tracking-tight whitespace-nowrap">
-              NBA Matchup Tool
-            </h1>
-            <p className="text-[11px] text-[var(--text-muted)]">2025-26</p>
+          <div className="flex items-center gap-3 shrink-0">
+            {hasTeams && (
+              <button
+                onClick={() => { setTeam1Id(null); setTeam2Id(null); setMode('season'); }}
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+                title="Back to bracket"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2 6.5L8 2L14 6.5V13.5C14 14.0523 13.5523 14.5 13 14.5H3C2.44772 14.5 2 14.0523 2 13.5V6.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+                  <path d="M6 14.5V9.5H10V14.5" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            )}
+            <div>
+              <h1 className="text-sm font-semibold text-[var(--text-primary)] tracking-tight whitespace-nowrap">
+                Matchup Tool
+              </h1>
+              <p className="text-[11px] text-[var(--text-muted)]">2025-26</p>
+            </div>
           </div>
           <div className="flex gap-4">
             <TeamSelector
