@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Query
 from cachetools import TTLCache
 
 from app.services.nba_client import NBAClient
-from app.services.team_stats import normalize_team_stats, extract_standings_for_teams
+from app.services.team_stats import normalize_team_stats, normalize_all_team_stats, compute_league_ranks, extract_standings_for_teams
 from app.services.game_finder import process_h2h_games
 from app.services.h2h_stats import process_h2h_team_stats
 from app.services.player_stats import process_player_stats
@@ -39,7 +39,7 @@ async def get_matchup(
         # Build all tasks for parallel execution
         tasks = []
 
-        # 1. Team stats for each measure type
+        # 1. Team stats for each measure type (just the 2 teams)
         for mt in MEASURE_TYPES:
             tasks.append(client.get_team_stats(team_ids, measure_type=mt, season_type=season_type))
 
@@ -49,6 +49,10 @@ async def get_matchup(
 
         # 3. Standings
         tasks.append(client.get_standings(season_type=season_type))
+
+        # 4. All teams' stats for league-wide ranking (Base + Advanced)
+        for mt in ["Base", "Advanced"]:
+            tasks.append(client.get_all_team_stats(measure_type=mt, season_type=season_type))
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -63,6 +67,14 @@ async def get_matchup(
         h2h_team2_data = results[len(MEASURE_TYPES) + 1]
         standings_data = results[len(MEASURE_TYPES) + 2]
 
+        # All-teams stats for ranking
+        league_rank_types = ["Base", "Advanced"]
+        league_stat_responses = {}
+        for j, mt in enumerate(league_rank_types):
+            idx = len(MEASURE_TYPES) + 3 + j
+            if idx < len(results) and not isinstance(results[idx], Exception):
+                league_stat_responses[mt] = results[idx]
+
     except HTTPException:
         raise
     except Exception as e:
@@ -70,6 +82,12 @@ async def get_matchup(
 
     # Process team stats
     team_stats = normalize_team_stats(stat_responses, team_ids)
+
+    # Compute league-wide percentile ranks
+    league_ranks = {}
+    if league_stat_responses:
+        all_team_stats = normalize_all_team_stats(league_stat_responses)
+        league_ranks = compute_league_ranks(all_team_stats, team_ids)
 
     # Process standings
     standings_info = extract_standings_for_teams(standings_data, team_ids)
@@ -95,7 +113,7 @@ async def get_matchup(
             id=int(tid),
             abbreviation=ts.get("abbreviation", si.get("abbreviation", "")),
             stats=stats,
-            stats_ranks=ts.get("stats_ranks", {}),
+            stats_ranks=league_ranks.get(tid, {}),
             record=si.get("record", "0-0"),
             conf_rank=si.get("conf_rank"),
         )

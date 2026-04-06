@@ -1,39 +1,39 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TeamSelector from '../components/TeamSelector';
 import StatComparison from '../components/StatComparison';
 import HeadToHead from '../components/HeadToHead';
 import PlayerStats from '../components/PlayerStats';
 import RadarChart from '../components/RadarChart';
 import PlayoffBracket from '../components/PlayoffBracket';
+import ColorPicker from '../components/ColorPicker';
 import { useMatchupData } from '../hooks/useMatchupData';
 import { getTeamColor } from '../utils/teamColors';
 
-function MatchupHeader({ matchup, mode, onModeChange }) {
-  const team1Color = getTeamColor(matchup.team1.id);
-  const team2Color = getTeamColor(matchup.team2.id);
-
+function MatchupHeader({ matchup, mode, onModeChange, team1Color, team2Color, onColor1Change, onColor2Change }) {
   return (
     <div className="flex items-center justify-between py-4 border-b border-[var(--border-color)]">
       <div className="flex items-baseline gap-3">
-        <div className="flex items-baseline gap-1.5">
+        <div className="flex items-center gap-1.5">
           {matchup.team1.conf_rank != null && (
             <span className="text-xs text-[var(--text-muted)]">#{matchup.team1.conf_rank}</span>
           )}
           <span className="text-lg font-semibold" style={{ color: team1Color }}>
             {matchup.team1.abbreviation}
           </span>
+          <ColorPicker color={team1Color} onChange={onColor1Change} />
           <span className="text-xs text-[var(--text-muted)]">
             {matchup.team1.record}
           </span>
         </div>
         <span className="text-xs text-[var(--text-muted)] uppercase">vs</span>
-        <div className="flex items-baseline gap-1.5">
+        <div className="flex items-center gap-1.5">
           {matchup.team2.conf_rank != null && (
             <span className="text-xs text-[var(--text-muted)]">#{matchup.team2.conf_rank}</span>
           )}
           <span className="text-lg font-semibold" style={{ color: team2Color }}>
             {matchup.team2.abbreviation}
           </span>
+          <ColorPicker color={team2Color} onChange={onColor2Change} />
           <span className="text-xs text-[var(--text-muted)]">
             {matchup.team2.record}
           </span>
@@ -62,7 +62,17 @@ export default function MatchupPage() {
   const [team1Id, setTeam1Id] = useState(null);
   const [team2Id, setTeam2Id] = useState(null);
   const [mode, setMode] = useState('season');
+  const [team1Color, setTeam1Color] = useState('#3b82f6');
+  const [team2Color, setTeam2Color] = useState('#ef4444');
   const { matchup, players, h2hStats, h2hPlayers, standings, loading, error } = useMatchupData(team1Id, team2Id, mode);
+
+  // Reset colors when teams change
+  useEffect(() => {
+    if (team1Id) setTeam1Color(getTeamColor(team1Id));
+  }, [team1Id]);
+  useEffect(() => {
+    if (team2Id) setTeam2Color(getTeamColor(team2Id));
+  }, [team2Id]);
 
   const hasTeams = team1Id && team2Id;
   const isH2H = mode === 'h2h';
@@ -114,6 +124,10 @@ export default function MatchupPage() {
             matchup={matchup}
             mode={mode}
             onModeChange={setMode}
+            team1Color={team1Color}
+            team2Color={team2Color}
+            onColor1Change={setTeam1Color}
+            onColor2Change={setTeam2Color}
           />
         )}
 
@@ -142,21 +156,21 @@ export default function MatchupPage() {
         {!loading && (isH2H ? h2hStats : matchup) && (
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-0 mt-0">
             <div>
-              <StatComparison matchup={matchup} h2hStats={h2hStats} mode={mode} />
+              <StatComparison matchup={matchup} h2hStats={h2hStats} mode={mode} team1Color={team1Color} team2Color={team2Color} />
               {isH2H ? (
                 h2hPlayers && h2hStats && (
-                  <PlayerStats players={h2hPlayers} matchup={h2hStats} mode="h2h" />
+                  <PlayerStats players={h2hPlayers} matchup={h2hStats} mode="h2h" team1Color={team1Color} team2Color={team2Color} />
                 )
               ) : (
                 matchup && players && (
-                  <PlayerStats players={players} matchup={matchup} mode="season" />
+                  <PlayerStats players={players} matchup={matchup} mode="season" team1Color={team1Color} team2Color={team2Color} />
                 )
               )}
             </div>
             <div className="xl:border-l border-[var(--border-color)] xl:pl-5">
-              {matchup && <HeadToHead matchup={matchup} />}
+              {matchup && <HeadToHead matchup={matchup} team1Color={team1Color} team2Color={team2Color} />}
               {matchup && (
-                <RadarChart matchup={matchup} h2hStats={h2hStats} mode={mode} />
+                <RadarChart matchup={matchup} h2hStats={h2hStats} mode={mode} team1Color={team1Color} team2Color={team2Color} />
               )}
             </div>
           </div>

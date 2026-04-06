@@ -94,15 +94,15 @@ function PlayerTable({ players, teamColor, teamAbbr, subtitle }) {
   );
 }
 
-export default function PlayerStats({ players, matchup, mode = 'season' }) {
+export default function PlayerStats({ players, matchup, mode = 'season', team1Color: t1c, team2Color: t2c }) {
   if (!players || !matchup) return null;
 
   const isH2H = mode === 'h2h';
 
   const team1Abbr = matchup.team1.abbreviation;
   const team2Abbr = matchup.team2.abbreviation;
-  const team1Color = getTeamColor(isH2H ? team1Abbr : matchup.team1.id);
-  const team2Color = getTeamColor(isH2H ? team2Abbr : matchup.team2.id);
+  const team1Color = t1c || getTeamColor(isH2H ? team1Abbr : matchup.team1.id);
+  const team2Color = t2c || getTeamColor(isH2H ? team2Abbr : matchup.team2.id);
 
   return (
     <div className="py-4 border-t border-[var(--border-color)]">

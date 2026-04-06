@@ -73,7 +73,7 @@ function StatRow({ statKey, team1Stats, team2Stats, team1Ranks, team2Ranks, team
   );
 }
 
-export default function StatComparison({ matchup, h2hStats, mode = 'season' }) {
+export default function StatComparison({ matchup, h2hStats, mode = 'season', team1Color: t1c, team2Color: t2c }) {
   const isH2H = mode === 'h2h';
   const data = isH2H ? h2hStats : matchup;
   const sections = isH2H ? H2H_STAT_SECTIONS : STAT_SECTIONS;
@@ -83,11 +83,9 @@ export default function StatComparison({ matchup, h2hStats, mode = 'season' }) {
 
   const team1Abbr = data.team1.abbreviation;
   const team2Abbr = data.team2.abbreviation;
-  const team1Id = isH2H ? null : data.team1.id;
-  const team2Id = isH2H ? null : data.team2.id;
 
-  const team1Color = getTeamColor(isH2H ? team1Abbr : team1Id);
-  const team2Color = getTeamColor(isH2H ? team2Abbr : team2Id);
+  const team1Color = t1c || getTeamColor(isH2H ? team1Abbr : data.team1.id);
+  const team2Color = t2c || getTeamColor(isH2H ? team2Abbr : data.team2.id);
   const team1Stats = data.team1.stats;
   const team2Stats = data.team2.stats;
   const team1Ranks = isH2H ? data.team1.ranks : data.team1.stats_ranks;

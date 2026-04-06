@@ -32,6 +32,19 @@ class NBAClient:
     def _standings_headers(self) -> dict:
         return {"X-NBA-Api-Key": self.standings_key}
 
+    async def get_all_team_stats(self, season: str = None, per_mode: str = "PerGame", measure_type: str = "Base", season_type: str = "Regular Season") -> dict:
+        """Get stats for ALL teams (no teamId filter). Used for league-wide rankings."""
+        season = season or self._get_current_season()
+        url = f"{self.BASE_URL}/api/stats/team"
+        params = {
+            "leagueId": self.LEAGUE_ID, "season": season, "perMode": per_mode,
+            "measureType": measure_type, "seasonType": season_type,
+        }
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=self._stats_headers(), params=params, timeout=15)
+            response.raise_for_status()
+            return response.json()
+
     async def get_team_stats(self, team_ids: list[str], season: str = None, per_mode: str = "PerGame", measure_type: str = "Base", season_type: str = "Regular Season") -> dict:
         season = season or self._get_current_season()
         url = f"{self.BASE_URL}/api/stats/team"

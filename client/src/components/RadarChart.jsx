@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { statDisplayName } from '../utils/formatting';
-import { getTeamColor } from '../utils/teamColors';
 
 const PRESETS = {
   Overview: ['PTS', 'REB', 'AST', 'STL', 'BLK', 'DEF_RATING'],
@@ -16,18 +15,12 @@ const ALL_STATS = {
   Defense: ['STL', 'BLK', 'DREB', 'DEF_RATING', 'OPP_PTS_PAINT', 'OPP_PTS_FB', 'OPP_PTS_OFF_TOV', 'OPP_PTS2ND_CHANCE'],
 };
 
-/** Convert a 1-30 rank to a 0-100 percentile (rank 1 = 100, rank 30 = 0). */
-function rankToPercentile(rank) {
-  if (rank == null) return 50;
-  return ((30 - rank) / 29) * 100;
-}
-
 function polarToXY(angle, radius, cx, cy) {
   const rad = (angle - 90) * (Math.PI / 180);
   return { x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad) };
 }
 
-export default function RadarChart({ matchup, h2hStats, mode = 'season' }) {
+export default function RadarChart({ matchup, h2hStats, mode = 'season', team1Color, team2Color }) {
   const [preset, setPreset] = useState('Overview');
   const [selectedStats, setSelectedStats] = useState(PRESETS['Overview']);
 
@@ -40,14 +33,8 @@ export default function RadarChart({ matchup, h2hStats, mode = 'season' }) {
 
   const team1Abbr = data.team1.abbreviation;
   const team2Abbr = data.team2.abbreviation;
-  const team1Color = getTeamColor(
-    isH2H ? team1Abbr : data.team1.id
-  );
-  const team2Color = getTeamColor(
-    isH2H ? team2Abbr : data.team2.id
-  );
 
-  // Get rank data from season matchup
+  // Get rank data from season matchup (percentile 0-100 computed server-side)
   const team1Ranks = rankSource?.team1?.stats_ranks;
   const team2Ranks = rankSource?.team2?.stats_ranks;
 
@@ -61,11 +48,9 @@ export default function RadarChart({ matchup, h2hStats, mode = 'season' }) {
 
   const getPercentile = (teamRanks, statKey) => {
     if (!teamRanks) return 50;
-    const rank = teamRanks[`${statKey}_RANK`];
-    if (rank == null) return 50;
-    // For LOWER_IS_BETTER stats, rank 1 means lowest value which is best,
-    // so the rank already reflects "best = 1". Convert directly.
-    return rankToPercentile(rank);
+    const pct = teamRanks[`${statKey}_RANK`];
+    if (pct == null) return 50;
+    return pct;
   };
 
   const buildPolygon = (teamRanks) =>
@@ -89,7 +74,7 @@ export default function RadarChart({ matchup, h2hStats, mode = 'season' }) {
   const toggleStat = (stat) => {
     setSelectedStats((prev) => {
       if (prev.includes(stat)) {
-        if (prev.length <= 3) return prev; // minimum 3 axes
+        if (prev.length <= 3) return prev;
         return prev.filter((s) => s !== stat);
       }
       return [...prev, stat];
@@ -131,7 +116,7 @@ export default function RadarChart({ matchup, h2hStats, mode = 'season' }) {
           <div className="w-2.5 h-0.5 rounded-full" style={{ backgroundColor: team2Color }} />
           <span className="text-[10px] font-medium" style={{ color: team2Color }}>{team2Abbr}</span>
         </div>
-        <span className="text-[9px] text-[var(--text-muted)]">Percentile rank (0–100)</span>
+        <span className="text-[9px] text-[var(--text-muted)]">Percentile (0–100)</span>
       </div>
 
       <svg viewBox="0 0 300 300" className="w-full max-w-[300px] mx-auto">
@@ -151,14 +136,7 @@ export default function RadarChart({ matchup, h2hStats, mode = 'season' }) {
                 stroke="var(--border-color)"
                 strokeWidth={pct === 100 ? 0.8 : 0.4}
               />
-              {/* Ring label */}
-              <text
-                x={cx + 3}
-                y={cy - r + 1}
-                fill="var(--text-muted)"
-                fontSize={7}
-                opacity={0.5}
-              >
+              <text x={cx + 3} y={cy - r + 1} fill="var(--text-muted)" fontSize={7} opacity={0.5}>
                 {pct}
               </text>
             </g>

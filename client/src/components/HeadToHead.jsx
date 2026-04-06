@@ -1,11 +1,11 @@
 import { getTeamColor } from '../utils/teamColors';
 
-export default function HeadToHead({ matchup }) {
+export default function HeadToHead({ matchup, team1Color: t1c, team2Color: t2c }) {
   if (!matchup?.h2h_games?.length) return null;
 
   const { team1, team2, h2h_games } = matchup;
-  const team1Color = getTeamColor(team1.id);
-  const team2Color = getTeamColor(team2.id);
+  const team1Color = t1c || getTeamColor(team1.id);
+  const team2Color = t2c || getTeamColor(team2.id);
 
   const team1Wins = h2h_games.filter((g) => g.team1_wl === 'W').length;
   const team2Wins = h2h_games.filter((g) => g.team2_wl === 'W').length;
