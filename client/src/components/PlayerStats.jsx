@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import teams from '../data/nba_teams.json';
+import { getTeamColor } from '../utils/teamColors';
 
 const COLUMNS = [
   { key: 'player_name', label: 'Player', align: 'left' },
@@ -99,15 +99,10 @@ export default function PlayerStats({ players, matchup, mode = 'season' }) {
 
   const isH2H = mode === 'h2h';
 
-  const team1Info = isH2H
-    ? teams.find((t) => t.abbreviation === matchup.team1.abbreviation)
-    : teams.find((t) => t.id === matchup.team1.id);
-  const team2Info = isH2H
-    ? teams.find((t) => t.abbreviation === matchup.team2.abbreviation)
-    : teams.find((t) => t.id === matchup.team2.id);
-
   const team1Abbr = matchup.team1.abbreviation;
   const team2Abbr = matchup.team2.abbreviation;
+  const team1Color = getTeamColor(isH2H ? team1Abbr : matchup.team1.id);
+  const team2Color = getTeamColor(isH2H ? team2Abbr : matchup.team2.id);
 
   return (
     <div className="py-4 border-t border-[var(--border-color)]">
@@ -117,14 +112,14 @@ export default function PlayerStats({ players, matchup, mode = 'season' }) {
       <div className="flex gap-6 flex-col lg:flex-row">
         <PlayerTable
           players={players.team1_players}
-          teamColor={team1Info?.color || '#3b82f6'}
+          teamColor={team1Color}
           teamAbbr={team1Abbr}
           subtitle={isH2H ? `vs ${team2Abbr}` : null}
         />
         <div className="hidden lg:block w-px bg-[var(--border-color)]" />
         <PlayerTable
           players={players.team2_players}
-          teamColor={team2Info?.color || '#ef4444'}
+          teamColor={team2Color}
           teamAbbr={team2Abbr}
           subtitle={isH2H ? `vs ${team1Abbr}` : null}
         />

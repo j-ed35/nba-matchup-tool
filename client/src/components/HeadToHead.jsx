@@ -1,11 +1,11 @@
-import teams from '../data/nba_teams.json';
+import { getTeamColor } from '../utils/teamColors';
 
 export default function HeadToHead({ matchup }) {
   if (!matchup?.h2h_games?.length) return null;
 
   const { team1, team2, h2h_games } = matchup;
-  const team1Info = teams.find((t) => t.id === team1.id);
-  const team2Info = teams.find((t) => t.id === team2.id);
+  const team1Color = getTeamColor(team1.id);
+  const team2Color = getTeamColor(team2.id);
 
   const team1Wins = h2h_games.filter((g) => g.team1_wl === 'W').length;
   const team2Wins = h2h_games.filter((g) => g.team2_wl === 'W').length;
@@ -37,9 +37,9 @@ export default function HeadToHead({ matchup }) {
           style={{
             color:
               team1Wins > team2Wins
-                ? team1Info?.color
+                ? team1Color
                 : team2Wins > team1Wins
-                  ? team2Info?.color
+                  ? team2Color
                   : 'var(--text-secondary)',
           }}
         >
@@ -51,10 +51,10 @@ export default function HeadToHead({ matchup }) {
         <thead>
           <tr className="border-b border-[var(--border-color)]">
             <th className="text-left pb-1.5 font-medium text-[var(--text-muted)]">Date</th>
-            <th className="text-right pb-1.5 font-medium" style={{ color: team1Info?.color }}>
+            <th className="text-right pb-1.5 font-medium" style={{ color: team1Color }}>
               {team1.abbreviation}
             </th>
-            <th className="text-right pb-1.5 font-medium" style={{ color: team2Info?.color }}>
+            <th className="text-right pb-1.5 font-medium" style={{ color: team2Color }}>
               {team2.abbreviation}
             </th>
             <th className="text-right pb-1.5"></th>

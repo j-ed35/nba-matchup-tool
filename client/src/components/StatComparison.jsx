@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { formatStat, formatRank, formatOrdinal, statDisplayName, LOWER_IS_BETTER } from '../utils/formatting';
-import teams from '../data/nba_teams.json';
+import { getTeamColor } from '../utils/teamColors';
 
 const STAT_SECTIONS = [
   { title: 'Record', stats: ['W', 'L', 'W_PCT'] },
@@ -86,15 +86,8 @@ export default function StatComparison({ matchup, h2hStats, mode = 'season' }) {
   const team1Id = isH2H ? null : data.team1.id;
   const team2Id = isH2H ? null : data.team2.id;
 
-  const team1Info = isH2H
-    ? teams.find((t) => t.abbreviation === team1Abbr)
-    : teams.find((t) => t.id === team1Id);
-  const team2Info = isH2H
-    ? teams.find((t) => t.abbreviation === team2Abbr)
-    : teams.find((t) => t.id === team2Id);
-
-  const team1Color = team1Info?.color || '#3b82f6';
-  const team2Color = team2Info?.color || '#ef4444';
+  const team1Color = getTeamColor(isH2H ? team1Abbr : team1Id);
+  const team2Color = getTeamColor(isH2H ? team2Abbr : team2Id);
   const team1Stats = data.team1.stats;
   const team2Stats = data.team2.stats;
   const team1Ranks = isH2H ? data.team1.ranks : data.team1.stats_ranks;

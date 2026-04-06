@@ -1,33 +1,25 @@
 import { useState } from 'react';
-import { statDisplayName, LOWER_IS_BETTER } from '../utils/formatting';
-import teams from '../data/nba_teams.json';
+import { statDisplayName } from '../utils/formatting';
+import { getTeamColor } from '../utils/teamColors';
 
 const PRESETS = {
-  'Overview': ['PTS', 'REB', 'AST', 'STL', 'BLK', 'FG_PCT'],
-  'Shooting': ['FG_PCT', 'FG3_PCT', 'FT_PCT', 'TS_PCT', 'EFG_PCT', 'PTS'],
-  'Advanced': ['OFF_RATING', 'DEF_RATING', 'NET_RATING', 'PACE', 'TS_PCT', 'EFG_PCT'],
-  'Defense': ['STL', 'BLK', 'DREB', 'DEF_RATING', 'OPP_PTS_PAINT', 'OPP_PTS_FB'],
+  Overview: ['PTS', 'REB', 'AST', 'STL', 'BLK', 'DEF_RATING'],
+  Shooting: ['FG_PCT', 'FG3_PCT', 'FT_PCT', 'TS_PCT', 'EFG_PCT', 'PTS'],
+  Advanced: ['OFF_RATING', 'DEF_RATING', 'NET_RATING', 'PACE', 'TS_PCT', 'EFG_PCT'],
+  Defense: ['STL', 'BLK', 'DREB', 'DEF_RATING', 'OPP_PTS_PAINT', 'OPP_PTS_FB'],
 };
 
-// Normalize a stat value to 0-1 range for the chart.
-// Uses league-reasonable min/max bounds per stat.
-const STAT_RANGES = {
-  PTS: [95, 125], REB: [38, 50], AST: [20, 32], STL: [5, 11], BLK: [3, 7],
-  TOV: [10, 18], FG_PCT: [0.43, 0.50], FG3_PCT: [0.32, 0.40], FT_PCT: [0.72, 0.84],
-  TS_PCT: [0.54, 0.62], EFG_PCT: [0.50, 0.58],
-  OFF_RATING: [108, 120], DEF_RATING: [108, 120], NET_RATING: [-8, 10], PACE: [96, 104],
-  OREB: [8, 14], DREB: [30, 38], PF: [17, 24],
-  OPP_PTS_PAINT: [42, 56], OPP_PTS_FB: [10, 18], OPP_PTS_OFF_TOV: [14, 22], OPP_PTS2ND_CHANCE: [10, 16],
-  PTS_PAINT: [42, 56], PTS_FB: [10, 18], PTS_OFF_TOV: [14, 22], PTS2ND_CHANCE: [10, 16],
+const ALL_STATS = {
+  Overview: ['PTS', 'REB', 'AST', 'STL', 'BLK', 'TOV', 'OREB', 'DREB', 'PF', 'DEF_RATING', 'OFF_RATING', 'NET_RATING'],
+  Shooting: ['FG_PCT', 'FG3_PCT', 'FT_PCT', 'TS_PCT', 'EFG_PCT', 'PTS', 'PTS_PAINT', 'PTS_FB'],
+  Advanced: ['OFF_RATING', 'DEF_RATING', 'NET_RATING', 'PACE', 'TS_PCT', 'EFG_PCT', 'PTS_OFF_TOV', 'PTS2ND_CHANCE'],
+  Defense: ['STL', 'BLK', 'DREB', 'DEF_RATING', 'OPP_PTS_PAINT', 'OPP_PTS_FB', 'OPP_PTS_OFF_TOV', 'OPP_PTS2ND_CHANCE'],
 };
 
-function normalize(value, statKey) {
-  if (value == null) return 0;
-  const [min, max] = STAT_RANGES[statKey] || [0, value * 2 || 1];
-  let norm = (value - min) / (max - min);
-  // Invert stats where lower is better so "better" is always outward
-  if (LOWER_IS_BETTER.has(statKey)) norm = 1 - norm;
-  return Math.max(0.05, Math.min(1, norm));
+/** Convert a 1-30 rank to a 0-100 percentile (rank 1 = 100, rank 30 = 0). */
+function rankToPercentile(rank) {
+  if (rank == null) return 50;
+  return ((30 - rank) / 29) * 100;
 }
 
 function polarToXY(angle, radius, cx, cy) {
@@ -37,48 +29,74 @@ function polarToXY(angle, radius, cx, cy) {
 
 export default function RadarChart({ matchup, h2hStats, mode = 'season' }) {
   const [preset, setPreset] = useState('Overview');
+  const [selectedStats, setSelectedStats] = useState(PRESETS['Overview']);
+
   const isH2H = mode === 'h2h';
   const data = isH2H ? h2hStats : matchup;
+  // Always use season matchup for ranks (league-wide percentiles)
+  const rankSource = matchup;
 
   if (!data) return null;
 
   const team1Abbr = data.team1.abbreviation;
   const team2Abbr = data.team2.abbreviation;
-  const team1Info = isH2H
-    ? teams.find((t) => t.abbreviation === team1Abbr)
-    : teams.find((t) => t.id === data.team1.id);
-  const team2Info = isH2H
-    ? teams.find((t) => t.abbreviation === team2Abbr)
-    : teams.find((t) => t.id === data.team2.id);
+  const team1Color = getTeamColor(
+    isH2H ? team1Abbr : data.team1.id
+  );
+  const team2Color = getTeamColor(
+    isH2H ? team2Abbr : data.team2.id
+  );
 
-  const team1Color = team1Info?.color || '#3b82f6';
-  const team2Color = team2Info?.color || '#ef4444';
-  const team1Stats = data.team1.stats;
-  const team2Stats = data.team2.stats;
+  // Get rank data from season matchup
+  const team1Ranks = rankSource?.team1?.stats_ranks;
+  const team2Ranks = rankSource?.team2?.stats_ranks;
 
-  const stats = PRESETS[preset] || PRESETS['Overview'];
+  const stats = selectedStats.length >= 3 ? selectedStats : PRESETS[preset];
   const n = stats.length;
-  const cx = 140;
-  const cy = 140;
-  const maxR = 110;
-
+  const cx = 150;
+  const cy = 150;
+  const maxR = 115;
   const angleStep = 360 / n;
+  const rings = [25, 50, 75, 100];
 
-  // Grid rings
-  const rings = [0.25, 0.5, 0.75, 1.0];
+  const getPercentile = (teamRanks, statKey) => {
+    if (!teamRanks) return 50;
+    const rank = teamRanks[`${statKey}_RANK`];
+    if (rank == null) return 50;
+    // For LOWER_IS_BETTER stats, rank 1 means lowest value which is best,
+    // so the rank already reflects "best = 1". Convert directly.
+    return rankToPercentile(rank);
+  };
 
-  // Build polygon points
-  const buildPolygon = (teamStats) =>
+  const buildPolygon = (teamRanks) =>
     stats
       .map((key, i) => {
-        const val = normalize(teamStats?.[key], key);
-        const { x, y } = polarToXY(i * angleStep, val * maxR, cx, cy);
+        const pct = getPercentile(teamRanks, key);
+        const r = (pct / 100) * maxR;
+        const { x, y } = polarToXY(i * angleStep, Math.max(r, maxR * 0.03), cx, cy);
         return `${x},${y}`;
       })
       .join(' ');
 
-  const poly1 = buildPolygon(team1Stats);
-  const poly2 = buildPolygon(team2Stats);
+  const poly1 = buildPolygon(team1Ranks);
+  const poly2 = buildPolygon(team2Ranks);
+
+  const handlePreset = (p) => {
+    setPreset(p);
+    setSelectedStats(PRESETS[p]);
+  };
+
+  const toggleStat = (stat) => {
+    setSelectedStats((prev) => {
+      if (prev.includes(stat)) {
+        if (prev.length <= 3) return prev; // minimum 3 axes
+        return prev.filter((s) => s !== stat);
+      }
+      return [...prev, stat];
+    });
+  };
+
+  const availableStats = ALL_STATS[preset] || ALL_STATS['Overview'];
 
   return (
     <div className="py-4 border-t border-[var(--border-color)]">
@@ -90,7 +108,7 @@ export default function RadarChart({ matchup, h2hStats, mode = 'season' }) {
           {Object.keys(PRESETS).map((p) => (
             <button
               key={p}
-              onClick={() => setPreset(p)}
+              onClick={() => handlePreset(p)}
               className={`px-2 py-0.5 text-[10px] font-medium rounded transition-colors cursor-pointer ${
                 preset === p
                   ? 'bg-[var(--border-color)] text-[var(--text-primary)]'
@@ -113,24 +131,39 @@ export default function RadarChart({ matchup, h2hStats, mode = 'season' }) {
           <div className="w-2.5 h-0.5 rounded-full" style={{ backgroundColor: team2Color }} />
           <span className="text-[10px] font-medium" style={{ color: team2Color }}>{team2Abbr}</span>
         </div>
+        <span className="text-[9px] text-[var(--text-muted)]">Percentile rank (0–100)</span>
       </div>
 
-      <svg viewBox="0 0 280 280" className="w-full max-w-[280px] mx-auto">
+      <svg viewBox="0 0 300 300" className="w-full max-w-[300px] mx-auto">
         {/* Grid rings */}
-        {rings.map((r) => (
-          <polygon
-            key={r}
-            points={stats
-              .map((_, i) => {
-                const { x, y } = polarToXY(i * angleStep, r * maxR, cx, cy);
-                return `${x},${y}`;
-              })
-              .join(' ')}
-            fill="none"
-            stroke="var(--border-color)"
-            strokeWidth={r === 1 ? 0.8 : 0.4}
-          />
-        ))}
+        {rings.map((pct) => {
+          const r = (pct / 100) * maxR;
+          return (
+            <g key={pct}>
+              <polygon
+                points={stats
+                  .map((_, i) => {
+                    const { x, y } = polarToXY(i * angleStep, r, cx, cy);
+                    return `${x},${y}`;
+                  })
+                  .join(' ')}
+                fill="none"
+                stroke="var(--border-color)"
+                strokeWidth={pct === 100 ? 0.8 : 0.4}
+              />
+              {/* Ring label */}
+              <text
+                x={cx + 3}
+                y={cy - r + 1}
+                fill="var(--text-muted)"
+                fontSize={7}
+                opacity={0.5}
+              >
+                {pct}
+              </text>
+            </g>
+          );
+        })}
 
         {/* Axis lines */}
         {stats.map((_, i) => {
@@ -146,9 +179,9 @@ export default function RadarChart({ matchup, h2hStats, mode = 'season' }) {
         {/* Team 2 polygon */}
         <polygon points={poly2} fill={team2Color} fillOpacity={0.15} stroke={team2Color} strokeWidth={1.5} />
 
-        {/* Labels */}
+        {/* Axis labels */}
         {stats.map((key, i) => {
-          const { x, y } = polarToXY(i * angleStep, maxR + 16, cx, cy);
+          const { x, y } = polarToXY(i * angleStep, maxR + 18, cx, cy);
           return (
             <text
               key={key}
@@ -157,7 +190,7 @@ export default function RadarChart({ matchup, h2hStats, mode = 'season' }) {
               textAnchor="middle"
               dominantBaseline="middle"
               fill="var(--text-muted)"
-              fontSize={9}
+              fontSize={8}
               fontFamily="Inter, system-ui, sans-serif"
             >
               {statDisplayName(key).replace(/ /g, '\u00A0')}
@@ -165,6 +198,26 @@ export default function RadarChart({ matchup, h2hStats, mode = 'season' }) {
           );
         })}
       </svg>
+
+      {/* Stat chips */}
+      <div className="flex flex-wrap gap-1 mt-3 justify-center">
+        {availableStats.map((stat) => {
+          const active = selectedStats.includes(stat);
+          return (
+            <button
+              key={stat}
+              onClick={() => toggleStat(stat)}
+              className={`px-2 py-0.5 text-[9px] font-medium rounded-full transition-colors cursor-pointer border ${
+                active
+                  ? 'bg-[var(--border-color)] text-[var(--text-primary)] border-[var(--text-muted)]'
+                  : 'text-[var(--text-muted)] border-[var(--border-color)] hover:text-[var(--text-secondary)] hover:border-[var(--text-muted)]'
+              }`}
+            >
+              {statDisplayName(stat)}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

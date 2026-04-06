@@ -1,4 +1,5 @@
 import teams from '../data/nba_teams.json';
+import { getTeamColor } from './teamColors';
 
 function makeTeamFromSeries(id, tricode, city, name, seed, wins, losses) {
   if (!id || id === 0) {
@@ -25,7 +26,7 @@ function makeTeamFromSeries(id, tricode, city, name, seed, wins, losses) {
     losses: losses || 0,
     isPlaceholder: false,
     logo_url: info?.logo_url || `https://cdn.nba.com/logos/nba/${id}/global/L/logo.svg`,
-    color: info?.color || null,
+    color: getTeamColor(id),
   };
 }
 

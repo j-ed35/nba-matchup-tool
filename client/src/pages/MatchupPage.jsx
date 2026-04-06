@@ -6,11 +6,11 @@ import PlayerStats from '../components/PlayerStats';
 import RadarChart from '../components/RadarChart';
 import PlayoffBracket from '../components/PlayoffBracket';
 import { useMatchupData } from '../hooks/useMatchupData';
-import teams from '../data/nba_teams.json';
+import { getTeamColor } from '../utils/teamColors';
 
 function MatchupHeader({ matchup, mode, onModeChange }) {
-  const team1 = teams.find((t) => t.id === matchup.team1.id);
-  const team2 = teams.find((t) => t.id === matchup.team2.id);
+  const team1Color = getTeamColor(matchup.team1.id);
+  const team2Color = getTeamColor(matchup.team2.id);
 
   return (
     <div className="flex items-center justify-between py-4 border-b border-[var(--border-color)]">
@@ -19,7 +19,7 @@ function MatchupHeader({ matchup, mode, onModeChange }) {
           {matchup.team1.conf_rank != null && (
             <span className="text-xs text-[var(--text-muted)]">#{matchup.team1.conf_rank}</span>
           )}
-          <span className="text-lg font-semibold" style={{ color: team1?.color }}>
+          <span className="text-lg font-semibold" style={{ color: team1Color }}>
             {matchup.team1.abbreviation}
           </span>
           <span className="text-xs text-[var(--text-muted)]">
@@ -31,7 +31,7 @@ function MatchupHeader({ matchup, mode, onModeChange }) {
           {matchup.team2.conf_rank != null && (
             <span className="text-xs text-[var(--text-muted)]">#{matchup.team2.conf_rank}</span>
           )}
-          <span className="text-lg font-semibold" style={{ color: team2?.color }}>
+          <span className="text-lg font-semibold" style={{ color: team2Color }}>
             {matchup.team2.abbreviation}
           </span>
           <span className="text-xs text-[var(--text-muted)]">
