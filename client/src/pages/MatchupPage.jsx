@@ -61,10 +61,10 @@ function MatchupHeader({ matchup, mode, onModeChange, team1Color, team2Color, on
 export default function MatchupPage() {
   const [team1Id, setTeam1Id] = useState(null);
   const [team2Id, setTeam2Id] = useState(null);
-  const [mode, setMode] = useState('season');
+  const [mode, setMode] = useState('h2h');
   const [team1Color, setTeam1Color] = useState('#3b82f6');
   const [team2Color, setTeam2Color] = useState('#ef4444');
-  const { matchup, players, h2hStats, h2hPlayers, standings, loading, error } = useMatchupData(team1Id, team2Id, mode);
+  const { matchup, players, h2hStats, h2hPlayers, h2hPlayerRankings, standings, loading, error } = useMatchupData(team1Id, team2Id, mode);
 
   // Reset colors when teams change
   useEffect(() => {
@@ -84,7 +84,7 @@ export default function MatchupPage() {
           <div className="flex items-center gap-3 shrink-0">
             {hasTeams && (
               <button
-                onClick={() => { setTeam1Id(null); setTeam2Id(null); setMode('season'); }}
+                onClick={() => { setTeam1Id(null); setTeam2Id(null); setMode('h2h'); }}
                 className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
                 title="Back to bracket"
               >
@@ -159,7 +159,7 @@ export default function MatchupPage() {
               <StatComparison matchup={matchup} h2hStats={h2hStats} mode={mode} team1Color={team1Color} team2Color={team2Color} />
               {isH2H ? (
                 h2hPlayers && h2hStats && (
-                  <PlayerStats players={h2hPlayers} matchup={h2hStats} mode="h2h" team1Color={team1Color} team2Color={team2Color} />
+                  <PlayerStats players={h2hPlayers} matchup={h2hStats} mode="h2h" team1Color={team1Color} team2Color={team2Color} rankings={h2hPlayerRankings} />
                 )
               ) : (
                 matchup && players && (
@@ -169,9 +169,6 @@ export default function MatchupPage() {
             </div>
             <div className="xl:border-l border-[var(--border-color)] xl:pl-5">
               {matchup && <HeadToHead matchup={matchup} team1Color={team1Color} team2Color={team2Color} />}
-              {matchup && (
-                <RadarChart matchup={matchup} h2hStats={h2hStats} mode={mode} team1Color={team1Color} team2Color={team2Color} />
-              )}
             </div>
           </div>
         )}

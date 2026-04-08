@@ -1,6 +1,24 @@
 import { useState } from 'react';
 import { getTeamColor } from '../utils/teamColors';
 
+// Map column keys to ranking keys from the backend
+const RANK_KEY_MAP = {
+  PTS: 'PTS_RANK',
+  REB: 'REB_RANK',
+  AST: 'AST_RANK',
+  STL: 'STL_RANK',
+  BLK: 'BLK_RANK',
+  FG_PCT: 'FG_PCT_RANK',
+  FG3_PCT: 'FG3_PCT_RANK',
+  PLUS_MINUS: 'PLUS_MINUS_RANK',
+};
+
+function ordinal(n) {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
 const COLUMNS = [
   { key: 'player_name', label: 'Player', align: 'left' },
   { key: 'GP', label: 'GP', format: (v) => v != null ? Math.round(v) : '-' },
@@ -12,7 +30,7 @@ const COLUMNS = [
   { key: 'FG3_PCT', label: '3P%', format: (v) => v != null ? `${(v < 1 ? v * 100 : v).toFixed(1)}` : '-' },
 ];
 
-function PlayerTable({ players, teamColor, teamAbbr, subtitle }) {
+function PlayerTable({ players, teamColor, teamAbbr, subtitle, rankings }) {
   const [sortKey, setSortKey] = useState('MIN');
   const [sortDir, setSortDir] = useState('desc');
 
@@ -63,23 +81,40 @@ function PlayerTable({ players, teamColor, teamAbbr, subtitle }) {
             </tr>
           </thead>
           <tbody>
-            {sorted.map((player, i) => (
-              <tr
-                key={player.player_id || i}
-                className="border-b border-[var(--border-color)]/20 hover:bg-white/[0.015] transition-colors"
-              >
-                {COLUMNS.map((col) => (
-                  <td
-                    key={col.key}
-                    className={`py-1 pr-3 tabular-nums ${
-                      col.align === 'left' ? 'text-left text-[var(--text-secondary)]' : 'text-right text-[var(--text-muted)]'
-                    }`}
-                  >
-                    {col.format ? col.format(player[col.key]) : player[col.key] ?? '-'}
-                  </td>
-                ))}
-              </tr>
-            ))}
+            {sorted.map((player, i) => {
+              const playerRanks = rankings?.[String(player.player_id)] || {};
+              return (
+                <tr
+                  key={player.player_id || i}
+                  className="border-b border-[var(--border-color)]/20 hover:bg-white/[0.015] transition-colors"
+                >
+                  {COLUMNS.map((col) => {
+                    const rankKey = RANK_KEY_MAP[col.key];
+                    const rank = rankKey ? playerRanks[rankKey] : null;
+                    const showRank = rank != null && rank <= 10;
+                    const isFirst = rank === 1;
+
+                    return (
+                      <td
+                        key={col.key}
+                        className={`py-1 pr-3 tabular-nums ${
+                          col.align === 'left' ? 'text-left text-[var(--text-secondary)]' : 'text-right text-[var(--text-muted)]'
+                        }`}
+                      >
+                        <div className={col.align === 'left' ? '' : 'flex flex-col items-end'}>
+                          <span>{col.format ? col.format(player[col.key]) : player[col.key] ?? '-'}</span>
+                          {showRank && (
+                            <span className={`text-[9px] leading-none ${isFirst ? 'font-bold text-[var(--accent)]' : 'text-[var(--text-muted)]'}`}>
+                              {ordinal(rank)}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
             {(!players || players.length === 0) && (
               <tr>
                 <td colSpan={COLUMNS.length} className="py-3 text-center text-[var(--text-muted)] text-[10px]">
@@ -94,10 +129,11 @@ function PlayerTable({ players, teamColor, teamAbbr, subtitle }) {
   );
 }
 
-export default function PlayerStats({ players, matchup, mode = 'season', team1Color: t1c, team2Color: t2c }) {
+export default function PlayerStats({ players, matchup, mode = 'season', team1Color: t1c, team2Color: t2c, rankings }) {
   if (!players || !matchup) return null;
 
   const isH2H = mode === 'h2h';
+  const rankingsMap = isH2H ? rankings?.rankings : null;
 
   const team1Abbr = matchup.team1.abbreviation;
   const team2Abbr = matchup.team2.abbreviation;
@@ -115,6 +151,7 @@ export default function PlayerStats({ players, matchup, mode = 'season', team1Co
           teamColor={team1Color}
           teamAbbr={team1Abbr}
           subtitle={isH2H ? `vs ${team2Abbr}` : null}
+          rankings={rankingsMap}
         />
         <div className="hidden lg:block w-px bg-[var(--border-color)]" />
         <PlayerTable
@@ -122,6 +159,7 @@ export default function PlayerStats({ players, matchup, mode = 'season', team1Co
           teamColor={team2Color}
           teamAbbr={team2Abbr}
           subtitle={isH2H ? `vs ${team1Abbr}` : null}
+          rankings={rankingsMap}
         />
       </div>
     </div>

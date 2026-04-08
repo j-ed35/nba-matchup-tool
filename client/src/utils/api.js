@@ -49,3 +49,12 @@ export function getH2HPlayers(team1Id, team2Id) {
   });
   return fetchJSON(`/matchup/h2h-players?${params}`);
 }
+
+export function getBoxscore(gameId) {
+  return fetchJSON(`/matchup/boxscore?game_id=${gameId}`);
+}
+
+export function getH2HPlayerRankings(team1Id, team2Id) {
+  const params = new URLSearchParams({ team1_id: team1Id, team2_id: team2Id });
+  return fetchJSON(`/matchup/h2h-player-rankings?${params}`);
+}

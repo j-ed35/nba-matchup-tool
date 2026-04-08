@@ -152,3 +152,32 @@ class NBAClient:
             response = await client.get(url, headers=self._querytool_headers(), params=params, timeout=15)
             response.raise_for_status()
             return response.json()
+
+    async def get_boxscore(self, game_id: str, measure_type: str = "Traditional") -> dict:
+        """Fetch box score for a specific game from the Stats API."""
+        url = f"{self.BASE_URL}/api/stats/boxscore"
+        params = {
+            "gameId": game_id,
+            "measureType": measure_type,
+        }
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=self._stats_headers(), params=params, timeout=15)
+            response.raise_for_status()
+            return response.json()
+
+    async def get_all_players_vs_opponent(self, opp_team_id: str, season: str = None,
+                                          per_mode: str = "PerGame", measure_type: str = "Base",
+                                          season_type: str = "Regular Season") -> dict:
+        """Get ALL players' season stats filtered to games vs a specific opponent.
+        Returns all players league-wide — used to compute player-level rankings vs this opponent."""
+        season = season or self._get_current_season()
+        url = f"{self.BASE_URL}/api/querytool/season/player"
+        params = {
+            "leagueId": self.LEAGUE_ID, "SeasonYear": season, "SeasonType": season_type,
+            "PerMode": per_mode, "Grouping": "None", "MeasureType": measure_type,
+            "oppTeamId": str(opp_team_id),
+        }
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=self._querytool_headers(), params=params, timeout=20)
+            response.raise_for_status()
+            return response.json()

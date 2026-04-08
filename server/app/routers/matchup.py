@@ -17,6 +17,10 @@ _matchup_cache = TTLCache(maxsize=64, ttl=900)
 # Cache H2H stats for 30 minutes
 _h2h_stats_cache = TTLCache(maxsize=64, ttl=1800)
 _h2h_players_cache = TTLCache(maxsize=64, ttl=1800)
+_h2h_player_rankings_cache = TTLCache(maxsize=64, ttl=1800)
+
+# Box scores don't change, cache 1 hour
+_boxscore_cache = TTLCache(maxsize=128, ttl=3600)
 
 MEASURE_TYPES = ["Base", "Advanced", "Misc", "Opponent"]
 
@@ -191,3 +195,58 @@ async def get_h2h_players(
     response = PlayerStatsResponse(team1_players=team1_players, team2_players=team2_players)
     _h2h_players_cache[cache_key] = response
     return response
+
+
+@router.get("/matchup/boxscore")
+async def get_game_boxscore(
+    game_id: str = Query(..., description="NBA game ID"),
+):
+    cache_key = f"boxscore:{game_id}"
+    if cache_key in _boxscore_cache:
+        return _boxscore_cache[cache_key]
+
+    client = NBAClient()
+    try:
+        raw = await client.get_boxscore(game_id)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Failed to fetch boxscore: {str(e)}")
+
+    from app.services.boxscore import process_boxscore
+    result = process_boxscore(raw, game_id)
+    _boxscore_cache[cache_key] = result
+    return result
+
+
+@router.get("/matchup/h2h-player-rankings")
+async def get_h2h_player_rankings(
+    team1_id: str = Query(..., description="Team 1 ID"),
+    team2_id: str = Query(..., description="Team 2 ID"),
+    season_type: str = Query("Regular Season", description="Season type"),
+):
+    cache_key = f"h2h_player_rankings:{team1_id}:{team2_id}:{season_type}"
+    if cache_key in _h2h_player_rankings_cache:
+        return _h2h_player_rankings_cache[cache_key]
+
+    client = NBAClient()
+
+    try:
+        # All players vs team2 (for team1's rankings), all players vs team1 (for team2's rankings)
+        all_vs_t2, all_vs_t1 = await asyncio.gather(
+            client.get_all_players_vs_opponent(opp_team_id=team2_id, season_type=season_type),
+            client.get_all_players_vs_opponent(opp_team_id=team1_id, season_type=season_type),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Failed to fetch player rankings: {str(e)}")
+
+    from app.services.player_rankings import compute_player_rankings
+
+    # Rankings for team1 players (among all players who faced team2)
+    team1_rankings = compute_player_rankings(all_vs_t2, {str(team1_id)})
+    # Rankings for team2 players (among all players who faced team1)
+    team2_rankings = compute_player_rankings(all_vs_t1, {str(team2_id)})
+
+    rankings = {**team1_rankings, **team2_rankings}
+
+    result = {"rankings": rankings}
+    _h2h_player_rankings_cache[cache_key] = result
+    return result
