@@ -7,9 +7,9 @@ import RadarChart from '../components/RadarChart';
 import PlayoffBracket from '../components/PlayoffBracket';
 import ColorPicker from '../components/ColorPicker';
 import { useMatchupData } from '../hooks/useMatchupData';
-import { getTeamColor } from '../utils/teamColors';
+import { getTeamColor, getTeamColors } from '../utils/teamColors';
 
-function MatchupHeader({ matchup, mode, onModeChange, team1Color, team2Color, onColor1Change, onColor2Change }) {
+function MatchupHeader({ matchup, mode, onModeChange, team1Color, team2Color, onColor1Change, onColor2Change, team1Colors, team2Colors }) {
   return (
     <div className="flex items-center justify-between py-4 border-b border-[var(--border-color)]">
       <div className="flex items-baseline gap-3">
@@ -20,7 +20,7 @@ function MatchupHeader({ matchup, mode, onModeChange, team1Color, team2Color, on
           <span className="text-lg font-semibold" style={{ color: team1Color }}>
             {matchup.team1.abbreviation}
           </span>
-          <ColorPicker color={team1Color} onChange={onColor1Change} />
+          <ColorPicker color={team1Color} onChange={onColor1Change} teamColors={team1Colors} />
           <span className="text-xs text-[var(--text-muted)]">
             {matchup.team1.record}
           </span>
@@ -33,7 +33,7 @@ function MatchupHeader({ matchup, mode, onModeChange, team1Color, team2Color, on
           <span className="text-lg font-semibold" style={{ color: team2Color }}>
             {matchup.team2.abbreviation}
           </span>
-          <ColorPicker color={team2Color} onChange={onColor2Change} />
+          <ColorPicker color={team2Color} onChange={onColor2Change} teamColors={team2Colors} />
           <span className="text-xs text-[var(--text-muted)]">
             {matchup.team2.record}
           </span>
@@ -128,6 +128,8 @@ export default function MatchupPage() {
             team2Color={team2Color}
             onColor1Change={setTeam1Color}
             onColor2Change={setTeam2Color}
+            team1Colors={team1Id ? getTeamColors(team1Id) : null}
+            team2Colors={team2Id ? getTeamColors(team2Id) : null}
           />
         )}
 

@@ -96,6 +96,13 @@ export default function HeadToHead({ matchup, team1Color: t1c, team2Color: t2c }
     seriesLabel = `Tied ${team1Wins}-${team2Wins}`;
   }
 
+  function buildBoxScoreUrl(game) {
+    if (!game.game_id) return null;
+    const t1Abbr = team1.abbreviation.toLowerCase();
+    const t2Abbr = team2.abbreviation.toLowerCase();
+    return `https://www.nba.com/game/${t2Abbr}-vs-${t1Abbr}-${game.game_id}/box-score`;
+  }
+
   const toggleGame = useCallback(async (gameId) => {
     setExpanded((prev) => {
       const isOpen = prev[gameId];
@@ -160,6 +167,7 @@ export default function HeadToHead({ matchup, team1Color: t1c, team2Color: t2c }
             const isExpanded = expanded[game.game_id];
             const isLoading = loadingIds[game.game_id];
             const boxscore = boxscores[game.game_id];
+            const boxScoreUrl = buildBoxScoreUrl(game);
             return (
               <tr
                 key={game.game_id}
@@ -175,6 +183,20 @@ export default function HeadToHead({ matchup, team1Color: t1c, team2Color: t2c }
                         month: 'short',
                         day: 'numeric',
                       })}
+                      {boxScoreUrl && (
+                        <>
+                          {' – '}
+                          <a
+                            href={boxScoreUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Box Score
+                          </a>
+                        </>
+                      )}
                     </span>
                     <span className={`w-12 text-right tabular-nums ${t1Won ? 'font-semibold text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
                       {game.team1_pts}
